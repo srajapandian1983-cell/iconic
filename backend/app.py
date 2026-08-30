@@ -103,6 +103,7 @@ def index():
             "service": "Real estate project upload API (Supabase)",
             "storage": {"table": TABLE, "bucket": BUCKET},
             "endpoints": {
+                "upload_page": "GET /upload  (browser form)",
                 "list_projects": "GET /api/projects",
                 "get_project": "GET /api/projects/<id>",
                 "upload_project": "POST /api/projects  (multipart form: pdf, description, title?)",
@@ -111,6 +112,119 @@ def index():
             },
         }
     )
+
+
+UPLOAD_PAGE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Upload Project | SAM ICONIC Development</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; background: #eef2f7; color: #333; }
+  header { background: #1a3c5e; color: #fff; padding: 16px 20px; font-weight: bold; letter-spacing: 1px; }
+  header span { color: #f0a500; }
+  .wrap { max-width: 720px; margin: 24px auto; padding: 0 16px; }
+  .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 22px; margin-bottom: 22px; }
+  h2 { color: #1a3c5e; font-size: 18px; margin-bottom: 16px; }
+  label { display: block; font-size: 14px; font-weight: bold; color: #1a3c5e; margin: 12px 0 6px; }
+  input[type=text], input[type=file], textarea {
+    width: 100%; padding: 10px; border: 1px solid #ccd6e0; border-radius: 5px; font-size: 14px; font-family: inherit;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  button { background: #f0a500; color: #1a3c5e; border: 0; padding: 11px 22px; border-radius: 5px;
+    font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 16px; }
+  button:hover { background: #d99400; }
+  button:disabled { opacity: .6; cursor: default; }
+  #msg { margin-top: 14px; font-size: 14px; }
+  .ok { color: #2f7d32; }
+  .err { color: #c0392b; }
+  .item { border-top: 1px solid #eee; padding: 12px 0; display: flex; justify-content: space-between; gap: 12px; }
+  .item:first-of-type { border-top: 0; }
+  .item .t { font-weight: bold; color: #1a3c5e; }
+  .item .d { font-size: 13px; color: #666; }
+  .item a { color: #1a3c5e; font-size: 13px; }
+  .item .del { background: none; color: #c0392b; border: 1px solid #c0392b; padding: 4px 10px;
+    font-size: 12px; border-radius: 4px; margin: 0; align-self: center; }
+  .muted { color: #888; font-size: 14px; }
+</style>
+</head>
+<body>
+<header>SAM ICONIC <span>Development</span> Pvt Ltd &mdash; Project Upload</header>
+<div class="wrap">
+
+  <div class="card">
+    <h2>Upload a project (PDF)</h2>
+    <form id="f">
+      <label for="pdf">PDF file *</label>
+      <input type="file" id="pdf" name="pdf" accept="application/pdf,.pdf" required />
+      <label for="title">Title</label>
+      <input type="text" id="title" name="title" placeholder="e.g. Iconic Green Meadows" />
+      <label for="description">Description *</label>
+      <textarea id="description" name="description" placeholder="e.g. DTCP approved plots at West Tambaram, development in progress" required></textarea>
+      <button type="submit" id="btn">Upload</button>
+      <div id="msg"></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Uploaded projects</h2>
+    <div id="list" class="muted">Loading&hellip;</div>
+  </div>
+
+</div>
+<script>
+  var f = document.getElementById('f'), btn = document.getElementById('btn'), msg = document.getElementById('msg');
+
+  function load() {
+    fetch('/api/projects').then(function (r) { return r.json(); }).then(function (rows) {
+      var el = document.getElementById('list');
+      if (!rows.length) { el.className = 'muted'; el.textContent = 'No projects uploaded yet.'; return; }
+      el.className = '';
+      el.innerHTML = rows.map(function (p) {
+        return '<div class="item"><div><div class="t">' + esc(p.title) + '</div>' +
+          '<div class="d">' + esc(p.description) + '</div>' +
+          '<a href="' + p.file_url + '" target="_blank" rel="noopener">View PDF &#8599;</a></div>' +
+          '<button class="del" data-id="' + p.id + '">Delete</button></div>';
+      }).join('');
+    });
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    msg.textContent = ''; btn.disabled = true; btn.textContent = 'Uploading...';
+    fetch('/api/projects', { method: 'POST', body: new FormData(f) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.ok) { msg.className = 'ok'; msg.textContent = 'Uploaded: ' + res.j.title; f.reset(); load(); }
+        else { msg.className = 'err'; msg.textContent = 'Error: ' + (res.j.error || 'upload failed'); }
+      })
+      .catch(function () { msg.className = 'err'; msg.textContent = 'Network error'; })
+      .finally(function () { btn.disabled = false; btn.textContent = 'Upload'; });
+  });
+
+  document.getElementById('list').addEventListener('click', function (e) {
+    var b = e.target.closest('.del'); if (!b) return;
+    if (!confirm('Delete this project?')) return;
+    fetch('/api/projects/' + b.dataset.id, { method: 'DELETE' }).then(load);
+  });
+
+  load();
+</script>
+</body>
+</html>"""
+
+
+@app.get("/upload")
+def upload_page():
+    return UPLOAD_PAGE
 
 
 @app.get("/api/projects")

@@ -31,6 +31,15 @@ python app.py
 
 Server runs at `http://127.0.0.1:5000/`.
 
+## Uploading a project
+
+Open **`http://127.0.0.1:5000/upload`** in a browser. Pick the PDF, type a
+title and description, click **Upload**. The same page lists every uploaded
+project with a **View PDF** link and a **Delete** button.
+
+Uploaded projects appear automatically in the "Our Ongoing Projects" section
+of the public website.
+
 ## Environment (`backend/.env`)
 
 | Variable | Default | Meaning |
@@ -48,6 +57,7 @@ Server runs at `http://127.0.0.1:5000/`.
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/` | API + company info |
+| GET | `/upload` | Browser upload form + project list |
 | GET | `/api/projects` | List all uploaded projects (newest first) |
 | GET | `/api/projects/<id>` | One project's details |
 | POST | `/api/projects` | Upload a project (see below) |

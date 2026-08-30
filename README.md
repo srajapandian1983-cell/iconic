@@ -30,4 +30,6 @@ copy .env.example .env          # then fill SUPABASE_SERVICE_ROLE_KEY
 python app.py
 ```
 
-API runs at `http://127.0.0.1:5000/`.
+API runs at `http://127.0.0.1:5000/`. Upload projects at
+`http://127.0.0.1:5000/upload` — they show up automatically in the site's
+"Our Ongoing Projects" section.
