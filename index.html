@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAM ICONIC Development Private Limited | Real Estate</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #fff;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      background: #1a3c5e;
+      color: #fff;
+      padding: 18px 0;
+    }
+
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .logo span {
+      color: #f0a500;
+    }
+
+    nav a {
+      margin-left: 20px;
+      font-size: 15px;
+    }
+
+    nav a:hover {
+      color: #f0a500;
+    }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: #1a3c5e;
+      text-align: center;
+      padding: 110px 0;
+      min-height: 540px;
+    }
+
+    /* Background slideshow: full-bleed building & layout scenes */
+    .hero-slideshow {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-slideshow .slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: scale(1.12);
+      transition: opacity 1.8s ease;
+    }
+
+    .hero-slideshow .slide.is-active {
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 1.8s ease, transform 8s ease;
+    }
+
+    .hero-slideshow svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Gentle vignette for depth and text contrast */
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(180deg,
+        rgba(15, 26, 43, 0.32) 0%,
+        rgba(15, 26, 43, 0.10) 42%,
+        rgba(15, 26, 43, 0.40) 100%);
+    }
+
+    .hero .container {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-card {
+      display: inline-block;
+      max-width: 640px;
+      padding: 34px 44px;
+      background: rgba(255, 255, 255, 0.88);
+      border-radius: 14px;
+      box-shadow: 0 18px 50px rgba(10, 22, 40, 0.38);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-slideshow .slide,
+      .hero-slideshow .slide.is-active {
+        transform: none;
+        transition: opacity 0.4s ease;
+      }
+    }
+
+    .hero h1 {
+      font-size: 32px;
+      color: #1a3c5e;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      font-size: 17px;
+      max-width: 600px;
+      margin: 0 auto 24px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #f0a500;
+      color: #1a3c5e;
+      padding: 12px 26px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background: #d99400;
+    }
+
+    /* Sections */
+    section {
+      padding: 55px 0;
+    }
+
+    section h2 {
+      font-size: 26px;
+      color: #1a3c5e;
+      margin-bottom: 22px;
+      text-align: center;
+    }
+
+    .about p {
+      max-width: 750px;
+      margin: 0 auto 14px;
+      text-align: center;
+    }
+
+    /* Services */
+    .services {
+      background: #f7f9fb;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 22px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 24px;
+    }
+
+    .card h3 {
+      color: #1a3c5e;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    /* Properties */
+    .property {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .property .photo {
+      background: #cdd8e2;
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a3c5e;
+      font-weight: bold;
+    }
+
+    .property .info {
+      padding: 18px;
+    }
+
+    .property .info h3 {
+      color: #1a3c5e;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .property .info .price {
+      color: #f0a500;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    /* Contact */
+    .contact {
+      background: #1a3c5e;
+      color: #fff;
+      text-align: center;
+    }
+
+    .contact h2 {
+      color: #fff;
+    }
+
+    .contact p {
+      margin-bottom: 8px;
+    }
+
+    .contact a {
+      color: #f0a500;
+    }
+
+    /* Footer */
+    footer {
+      background: #12293f;
+      color: #cdd8e2;
+      text-align: center;
+      padding: 18px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <div class="logo">SAM ICONIC <span>Development</span> Pvt Ltd</div>
+      <nav>
+        <a href="#about">About</a>
+        <a href="#services">Services</a>
+        <a href="#properties">Properties</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-slideshow" aria-hidden="true">
+
+      <!-- Scene 1: modern city skyline at sunset -->
+      <div class="slide is-active">
+        <svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s1sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffe8c6"/><stop offset="0.45" stop-color="#ffcf9d"/>
+              <stop offset="0.75" stop-color="#f3b189"/><stop offset="1" stop-color="#e28a72"/>
+            </linearGradient>
+            <radialGradient id="s1sun" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#fff7e2"/><stop offset="0.4" stop-color="#ffd98a"/>
+              <stop offset="1" stop-color="#ffd98a" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="s1far" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#c98a86"/><stop offset="1" stop-color="#ad727c"/>
+            </linearGradient>
+            <linearGradient id="s1mid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#6c7099"/><stop offset="1" stop-color="#4c5178"/>
+            </linearGradient>
+            <linearGradient id="s1near" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#303b5d"/><stop offset="1" stop-color="#1b2340"/>
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="600" fill="url(#s1sky)"/>
+          <circle cx="600" cy="370" r="210" fill="url(#s1sun)"/>
+          <circle cx="600" cy="370" r="72" fill="#fff2d6"/>
+          <g fill="url(#s1far)" opacity="0.85">
+            <rect x="40" y="300" width="90" height="220"/><rect x="150" y="255" width="70" height="265"/>
+            <rect x="245" y="320" width="115" height="200"/><rect x="380" y="235" width="80" height="285"/>
+            <rect x="470" y="300" width="95" height="220"/><rect x="640" y="275" width="90" height="245"/>
+            <rect x="740" y="230" width="80" height="290"/><rect x="835" y="300" width="120" height="220"/>
+            <rect x="965" y="255" width="80" height="265"/><rect x="1060" y="310" width="110" height="210"/>
+          </g>
+          <g fill="url(#s1mid)">
+            <rect x="80" y="330" width="120" height="230"/><rect x="225" y="278" width="100" height="282"/>
+            <rect x="355" y="350" width="110" height="210"/><rect x="700" y="300" width="120" height="260"/>
+            <rect x="850" y="265" width="100" height="295"/><rect x="985" y="340" width="135" height="220"/>
+          </g>
+          <g fill="url(#s1near)">
+            <rect x="110" y="380" width="155" height="220"/><rect x="300" y="325" width="120" height="275"/>
+            <rect x="470" y="290" width="150" height="310"/><rect x="655" y="360" width="130" height="240"/>
+            <rect x="820" y="330" width="145" height="270"/><rect x="985" y="390" width="160" height="210"/>
+          </g>
+          <g fill="#1b2340">
+            <rect x="525" y="252" width="14" height="40"/><rect x="530" y="222" width="4" height="34"/>
+            <rect x="862" y="310" width="42" height="22"/><rect x="870" y="298" width="26" height="14"/>
+          </g>
+          <g fill="#ffd36b">
+            <rect x="132" y="410" width="15" height="19"/><rect x="164" y="410" width="15" height="19"/>
+            <rect x="196" y="452" width="15" height="19"/><rect x="228" y="410" width="15" height="19"/>
+            <rect x="132" y="486" width="15" height="19"/><rect x="228" y="486" width="15" height="19"/>
+            <rect x="324" y="358" width="15" height="19"/><rect x="356" y="400" width="15" height="19"/>
+            <rect x="388" y="358" width="15" height="19"/><rect x="356" y="470" width="15" height="19"/>
+            <rect x="498" y="330" width="17" height="21"/><rect x="538" y="374" width="17" height="21"/>
+            <rect x="578" y="330" width="17" height="21"/><rect x="498" y="430" width="17" height="21"/>
+            <rect x="578" y="474" width="17" height="21"/><rect x="498" y="524" width="17" height="21"/>
+            <rect x="684" y="400" width="15" height="19"/><rect x="716" y="442" width="15" height="19"/>
+            <rect x="684" y="500" width="15" height="19"/><rect x="860" y="372" width="15" height="19"/>
+            <rect x="900" y="414" width="15" height="19"/><rect x="932" y="372" width="15" height="19"/>
+            <rect x="900" y="490" width="15" height="19"/><rect x="1012" y="432" width="15" height="19"/>
+            <rect x="1052" y="474" width="15" height="19"/><rect x="1092" y="432" width="15" height="19"/>
+          </g>
+          <rect x="0" y="560" width="1200" height="40" fill="#131a2f"/>
+          <g stroke="#131a2f" stroke-width="5">
+            <line x1="210" y1="560" x2="210" y2="516"/><line x1="1010" y1="560" x2="1010" y2="516"/>
+          </g>
+          <circle cx="210" cy="512" r="7" fill="#ffd36b"/><circle cx="1010" cy="512" r="7" fill="#ffd36b"/>
+          <g stroke="#8a5f66" stroke-width="3" fill="none" stroke-linecap="round">
+            <path d="M170 120 q12 -13 24 0 q12 -13 24 0"/><path d="M250 92 q10 -11 20 0 q10 -11 20 0"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Scene 2: landscaped gated community master plan -->
+      <div class="slide">
+        <svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s2grass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#dcecc8"/><stop offset="1" stop-color="#bfdfa9"/>
+            </linearGradient>
+            <linearGradient id="s2pool" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#7fd0e6"/><stop offset="1" stop-color="#37a6c9"/>
+            </linearGradient>
+            <pattern id="s2plots" width="122" height="88" patternUnits="userSpaceOnUse">
+              <rect x="9" y="22" width="104" height="58" rx="6" fill="#f4ead3" stroke="#c8a86f" stroke-width="2"/>
+              <polygon points="9,22 61,4 113,22" fill="#c86b52"/>
+            </pattern>
+            <g id="s2tree">
+              <circle cx="0" cy="0" r="14" fill="#6fae5c"/><circle cx="-10" cy="6" r="11" fill="#7cbb66"/>
+              <circle cx="10" cy="6" r="11" fill="#5c9b4d"/>
+            </g>
+          </defs>
+          <rect width="1200" height="600" fill="url(#s2grass)"/>
+          <ellipse cx="600" cy="285" rx="440" ry="185" fill="none" stroke="#cfcfcf" stroke-width="72"/>
+          <ellipse cx="600" cy="285" rx="440" ry="185" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="24 18"/>
+          <rect x="566" y="430" width="68" height="170" fill="#cfcfcf"/>
+          <line x1="600" y1="440" x2="600" y2="600" stroke="#ffffff" stroke-width="3" stroke-dasharray="22 16"/>
+          <ellipse cx="600" cy="285" rx="315" ry="100" fill="#b7dda1"/>
+          <path d="M430 270 q-42 0 -42 26 q0 26 42 26 q62 0 84 -13 q30 -19 0 -32 q-30 -13 -84 -9 z"
+                fill="url(#s2pool)" stroke="#ffffff" stroke-width="3"/>
+          <g>
+            <rect x="545" y="238" width="110" height="68" fill="#eef1f5" stroke="#26476a" stroke-width="3"/>
+            <polygon points="533,238 600,202 667,238" fill="#3a6ea5" stroke="#26476a" stroke-width="3"/>
+          </g>
+          <rect x="700" y="250" width="92" height="48" fill="#5aa469" stroke="#ffffff" stroke-width="2"/>
+          <line x1="746" y1="250" x2="746" y2="298" stroke="#ffffff" stroke-width="2"/>
+          <rect x="70" y="30" width="1060" height="92" fill="url(#s2plots)"/>
+          <rect x="70" y="470" width="1060" height="100" fill="url(#s2plots)"/>
+          <rect x="56" y="150" width="150" height="300" fill="url(#s2plots)"/>
+          <rect x="994" y="150" width="150" height="300" fill="url(#s2plots)"/>
+          <use href="#s2tree" x="120" y="140"/><use href="#s2tree" x="1080" y="140"/>
+          <use href="#s2tree" x="120" y="470"/><use href="#s2tree" x="1080" y="470"/>
+          <use href="#s2tree" x="300" y="292"/><use href="#s2tree" x="900" y="292"/>
+          <use href="#s2tree" x="600" y="150"/><use href="#s2tree" x="600" y="428"/>
+          <g fill="#26476a"><rect x="545" y="545" width="16" height="42"/><rect x="639" y="545" width="16" height="42"/></g>
+        </svg>
+      </div>
+
+      <!-- Scene 3: modern villa with pool and garden -->
+      <div class="slide">
+        <svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="s3sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#bfe0f5"/><stop offset="1" stop-color="#eaf5fc"/>
+            </linearGradient>
+            <linearGradient id="s3glass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#d3ecf6"/><stop offset="1" stop-color="#98c4db"/>
+            </linearGradient>
+            <linearGradient id="s3pool" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#8fd6ea"/><stop offset="1" stop-color="#3ba7cb"/>
+            </linearGradient>
+            <linearGradient id="s3wood" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ca8f59"/><stop offset="1" stop-color="#b0743d"/>
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="600" fill="url(#s3sky)"/>
+          <circle cx="1050" cy="110" r="48" fill="#fff4d6"/>
+          <rect x="0" y="430" width="1200" height="170" fill="#bfe0a6"/>
+          <rect x="0" y="500" width="1200" height="100" fill="#dcd5c6"/>
+          <rect x="120" y="470" width="330" height="92" rx="12" fill="url(#s3pool)" stroke="#ffffff" stroke-width="4"/>
+          <g stroke="#ffffff" stroke-width="2" opacity="0.55">
+            <line x1="150" y1="500" x2="420" y2="500"/><line x1="150" y1="526" x2="420" y2="526"/>
+          </g>
+          <rect x="470" y="300" width="520" height="170" fill="#f4f1ec" stroke="#8a97a5" stroke-width="2"/>
+          <rect x="520" y="188" width="430" height="122" fill="#eceae4" stroke="#8a97a5" stroke-width="2"/>
+          <rect x="512" y="180" width="446" height="12" fill="#d7d3cb"/>
+          <rect x="462" y="292" width="536" height="12" fill="#d7d3cb"/>
+          <rect x="470" y="300" width="70" height="170" fill="url(#s3wood)"/>
+          <rect x="900" y="188" width="50" height="122" fill="url(#s3wood)"/>
+          <g fill="url(#s3glass)" stroke="#8a97a5" stroke-width="2">
+            <rect x="560" y="330" width="120" height="120"/><rect x="700" y="330" width="120" height="120"/>
+          </g>
+          <path d="M560 390 H820 M620 330 V450 M760 330 V450" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.7"/>
+          <rect x="850" y="360" width="70" height="110" fill="url(#s3wood)" stroke="#8a97a5" stroke-width="2"/>
+          <g fill="#ffe4a8" stroke="#8a97a5" stroke-width="2">
+            <rect x="560" y="214" width="90" height="72"/><rect x="680" y="214" width="90" height="72"/>
+            <rect x="800" y="214" width="80" height="72"/>
+          </g>
+          <g fill="#e3dfd7"><rect x="828" y="330" width="10" height="140"/><rect x="930" y="330" width="10" height="140"/></g>
+          <rect x="820" y="322" width="130" height="12" fill="#d7d3cb"/>
+          <g>
+            <rect x="1000" y="500" width="122" height="34" rx="11" fill="#356aa0"/>
+            <rect x="1020" y="483" width="72" height="24" rx="8" fill="#5b8fc0"/>
+            <circle cx="1022" cy="536" r="12" fill="#232f3e"/><circle cx="1100" cy="536" r="12" fill="#232f3e"/>
+          </g>
+          <g>
+            <rect x="150" y="360" width="12" height="112" fill="#9a6b3f"/>
+            <g fill="#4f9a54">
+              <ellipse cx="156" cy="352" rx="48" ry="14" transform="rotate(18 156 352)"/>
+              <ellipse cx="156" cy="352" rx="48" ry="14" transform="rotate(-18 156 352)"/>
+              <ellipse cx="156" cy="352" rx="48" ry="14" transform="rotate(62 156 352)"/>
+              <ellipse cx="156" cy="352" rx="48" ry="14" transform="rotate(-62 156 352)"/>
+            </g>
+          </g>
+          <g fill="#6fae5c">
+            <circle cx="500" cy="472" r="18"/><circle cx="530" cy="476" r="15"/><circle cx="1155" cy="470" r="20"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Scene 4: detailed 2BHK apartment floor plan -->
+      <div class="slide">
+        <svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="s4wood" width="28" height="11" patternUnits="userSpaceOnUse">
+              <rect width="28" height="11" fill="#ecdcc1"/>
+              <path d="M0 0 H28 M14 0 V11" stroke="#dcc59f" stroke-width="1"/>
+            </pattern>
+            <pattern id="s4tile" width="30" height="30" patternUnits="userSpaceOnUse">
+              <rect width="30" height="30" fill="#dceef0"/>
+              <path d="M0 0 H30 V30" fill="none" stroke="#c3e0e3" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="1200" height="600" fill="#f5f6f0"/>
+          <rect x="170" y="58" width="860" height="474" fill="#ffffff" stroke="#1a3c5e" stroke-width="10"/>
+          <rect x="175" y="63" width="430" height="272" fill="url(#s4wood)"/>
+          <rect x="175" y="335" width="240" height="192" fill="url(#s4tile)"/>
+          <rect x="415" y="335" width="190" height="192" fill="#fbe7cf"/>
+          <rect x="605" y="63" width="425" height="252" fill="url(#s4wood)"/>
+          <rect x="605" y="315" width="255" height="212" fill="url(#s4wood)"/>
+          <rect x="860" y="315" width="170" height="212" fill="url(#s4tile)"/>
+          <g stroke="#1a3c5e" stroke-width="7" fill="none">
+            <path d="M605 58 V532 M170 335 H605 M415 335 V532 M605 315 H1030 M860 315 V532"/>
+          </g>
+          <g stroke="#ffffff" stroke-width="9">
+            <line x1="605" y1="150" x2="605" y2="210"/><line x1="470" y1="335" x2="530" y2="335"/>
+            <line x1="605" y1="400" x2="605" y2="455"/><line x1="860" y1="380" x2="860" y2="430"/>
+            <line x1="300" y1="335" x2="360" y2="335"/>
+          </g>
+          <g stroke="#1a3c5e" stroke-width="2" fill="none">
+            <path d="M470 335 a60 60 0 0 1 60 60"/><path d="M605 455 a55 55 0 0 0 55 -55"/>
+            <path d="M300 335 a60 60 0 0 1 60 60"/>
+          </g>
+          <rect x="605" y="18" width="200" height="40" fill="#dcefd9" stroke="#1a3c5e" stroke-width="4"/>
+          <line x1="605" y1="58" x2="805" y2="58" stroke="#ffffff" stroke-width="9"/>
+          <g fill="#ffffff" stroke="#1a3c5e" stroke-width="3">
+            <rect x="205" y="108" width="150" height="55" rx="10"/>
+            <rect x="205" y="108" width="46" height="150" rx="10"/>
+            <rect x="272" y="184" width="70" height="40" rx="6"/>
+            <rect x="205" y="300" width="180" height="20"/>
+            <circle cx="510" cy="430" r="45"/>
+            <rect x="640" y="90" width="150" height="200" rx="8"/>
+            <rect x="640" y="90" width="150" height="45"/>
+            <rect x="640" y="345" width="120" height="160" rx="8"/>
+            <rect x="640" y="345" width="120" height="38"/>
+            <rect x="960" y="70" width="60" height="150"/>
+            <path d="M185 345 h120 v40 h-30 v142 h-90 z"/>
+            <rect x="875" y="332" width="40" height="55" rx="6"/>
+            <circle cx="1000" cy="360" r="18"/>
+            <rect x="958" y="452" width="58" height="62"/>
+          </g>
+          <g stroke="#1a3c5e" stroke-width="1.5" fill="#1a3c5e" font-family="Arial, sans-serif" font-size="18">
+            <line x1="170" y1="562" x2="1030" y2="562"/>
+            <path d="M170 554 v16 M1030 554 v16"/>
+            <text x="560" y="586">12.4 m</text>
+          </g>
+          <g fill="#1a3c5e" font-family="Arial, sans-serif" font-size="19" opacity="0.72">
+            <text x="330" y="210">LIVING</text><text x="252" y="440">KITCHEN</text>
+            <text x="452" y="440">DINING</text><text x="726" y="196">MASTER BEDROOM</text>
+            <text x="652" y="424">BEDROOM 2</text><text x="905" y="424">BATH</text>
+          </g>
+        </svg>
+      </div>
+
+    </div>
+    <div class="container">
+      <div class="hero-card">
+        <h1>Buy, Sell and Rent Property with Confidence</h1>
+        <p>SAM ICONIC Development Private Limited is a real estate company offering residential plots, apartments, villas, commercial spaces and open land across Chennai.</p>
+        <a href="#contact" class="btn">Enquire Now</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div class="container">
+      <h2>About Us</h2>
+      <p>SAM ICONIC Development Private Limited is a real estate firm based in West Tambaram, Chennai. We help buyers, sellers, tenants and landlords with property purchase, sale, rental and consulting.</p>
+      <p>Our work covers residential plots, flats, individual houses, villas, commercial shops, office space and agricultural land. We assist clients through site visits, price guidance, documentation support and registration.</p>
+    </div>
+  </section>
+
+  <section class="services" id="services">
+    <div class="container">
+      <h2>Our Services</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Property Sales</h3>
+          <p>Residential plots, apartments, villas and independent houses available for purchase.</p>
+        </div>
+        <div class="card">
+          <h3>Property Rentals</h3>
+          <p>Flats, houses and commercial units available for rent and lease.</p>
+        </div>
+        <div class="card">
+          <h3>Commercial Real Estate</h3>
+          <p>Shops, showrooms and office spaces for business use.</p>
+        </div>
+        <div class="card">
+          <h3>Land &amp; Plots</h3>
+          <p>DTCP and CMDA approved plots and open land for investment.</p>
+        </div>
+        <div class="card">
+          <h3>Resale &amp; Listing</h3>
+          <p>List your property for sale or resale with us and reach genuine buyers.</p>
+        </div>
+        <div class="card">
+          <h3>Property Consulting</h3>
+          <p>Guidance on pricing, site selection, documentation and registration.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="properties" id="properties">
+    <div class="container">
+      <h2>Featured Properties</h2>
+      <div class="grid">
+        <div class="property">
+          <div class="photo">Residential Plot</div>
+          <div class="info">
+            <h3>Residential Plot</h3>
+            <p>West Tambaram, Chennai</p>
+            <p>Approved layout, corner plot, road facing.</p>
+            <p class="price">Price on request</p>
+          </div>
+        </div>
+        <div class="property">
+          <div class="photo">2 BHK Apartment</div>
+          <div class="info">
+            <h3>2 BHK Apartment</h3>
+            <p>Tambaram, Chennai</p>
+            <p>Ready to move, covered car park, borewell and metro water.</p>
+            <p class="price">Price on request</p>
+          </div>
+        </div>
+        <div class="property">
+          <div class="photo">Commercial Space</div>
+          <div class="info">
+            <h3>Commercial Space</h3>
+            <p>Gandhi Road, West Tambaram</p>
+            <p>Ground floor shop space, main road frontage.</p>
+            <p class="price">Price on request</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div class="container">
+      <h2>Contact Us</h2>
+      <p><strong>SAM ICONIC Development Private Limited</strong></p>
+      <p>195/28, Gandhi Road, West Tambaram, Chennai 600045</p>
+      <p>Phone: <a href="tel:+916385106308">6385106308</a></p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 SAM ICONIC Development Private Limited. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Hero background slideshow: cross-fade between the building / layout templates
+    (function () {
+      var slides = document.querySelectorAll('.hero-slideshow .slide');
+      if (slides.length < 2) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var i = 0;
+      setInterval(function () {
+        slides[i].classList.remove('is-active');
+        i = (i + 1) % slides.length;
+        slides[i].classList.add('is-active');
+      }, 4500);
+    })();
+  </script>
+
+</body>
+</html>
