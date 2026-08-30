@@ -199,14 +199,35 @@ UPLOAD_PAGE = """<!DOCTYPE html>
 
   f.addEventListener('submit', function (e) {
     e.preventDefault();
-    msg.textContent = ''; btn.disabled = true; btn.textContent = 'Uploading...';
+    var file = document.getElementById('pdf').files[0];
+    if (file) {
+      var mb = file.size / 1048576;
+      msg.className = 'muted';
+      msg.textContent = 'Uploading ' + mb.toFixed(1) + ' MB…';
+    }
+    btn.disabled = true; btn.textContent = 'Uploading...';
     fetch('/api/projects', { method: 'POST', body: new FormData(f) })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-      .then(function (res) {
-        if (res.ok) { msg.className = 'ok'; msg.textContent = 'Uploaded: ' + res.j.title; f.reset(); load(); }
-        else { msg.className = 'err'; msg.textContent = 'Error: ' + (res.j.error || 'upload failed'); }
+      .then(function (r) {
+        return r.text().then(function (t) {
+          var j = null; try { j = JSON.parse(t); } catch (err) {}
+          return { ok: r.ok, status: r.status, j: j, text: t };
+        });
       })
-      .catch(function () { msg.className = 'err'; msg.textContent = 'Network error'; })
+      .then(function (res) {
+        if (res.ok && res.j) {
+          msg.className = 'ok'; msg.textContent = 'Uploaded: ' + res.j.title; f.reset(); load();
+        } else {
+          msg.className = 'err';
+          msg.textContent = 'Error ' + res.status + ': ' +
+            (res.j && res.j.error ? res.j.error : (res.text || 'upload failed').slice(0, 300));
+        }
+      })
+      .catch(function (err) {
+        msg.className = 'err';
+        msg.textContent = 'Cannot reach the server. Is the black "Project Upload" ' +
+          'window still open and showing "Running on http://127.0.0.1:5000"? ' +
+          '(' + err + ')';
+      })
       .finally(function () { btn.disabled = false; btn.textContent = 'Upload'; });
   });
 
@@ -330,4 +351,9 @@ def json_error(err):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", "5000")), debug=True)
+    app.run(
+        host="127.0.0.1",
+        port=int(os.environ.get("PORT", "5000")),
+        debug=True,
+        threaded=True,
+    )
