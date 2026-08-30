@@ -9,14 +9,14 @@
   body { font-family: Arial, Helvetica, sans-serif; background: #eef2f7; color: #333; }
   header { background: #1a3c5e; color: #fff; padding: 16px 20px; font-weight: bold; letter-spacing: 1px; }
   header span { color: #f0a500; }
-  .wrap { max-width: 720px; margin: 24px auto; padding: 0 16px; }
+  .wrap { max-width: 760px; margin: 24px auto; padding: 0 16px; }
   .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 22px; margin-bottom: 20px; }
   h2 { color: #1a3c5e; font-size: 18px; margin-bottom: 16px; }
   label { display: block; font-size: 14px; font-weight: bold; color: #1a3c5e; margin: 12px 0 6px; }
   input, textarea {
     width: 100%; padding: 10px; border: 1px solid #ccd6e0; border-radius: 5px; font-size: 14px; font-family: inherit;
   }
-  textarea { min-height: 82px; resize: vertical; }
+  textarea { min-height: 80px; resize: vertical; }
   button {
     background: #f0a500; color: #1a3c5e; border: 0; padding: 11px 22px; border-radius: 5px;
     font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 16px;
@@ -24,20 +24,26 @@
   button:hover { background: #d99400; }
   button:disabled { opacity: .6; cursor: default; }
   button.ghost { background: none; border: 1px solid #1a3c5e; color: #1a3c5e; margin: 0; padding: 6px 14px; }
+  button.small { margin: 0; padding: 6px 12px; font-size: 13px; }
+  button.link { background: none; color: #c0392b; border: 1px solid #c0392b; margin: 0; padding: 4px 10px; font-size: 12px; }
   .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .msg { margin-top: 14px; font-size: 14px; word-break: break-word; }
   .ok { color: #2f7d32; }
   .err { color: #c0392b; }
   .muted { color: #888; font-size: 14px; }
-  .item { border-top: 1px solid #eee; padding: 12px 0; display: flex; justify-content: space-between; gap: 12px; }
-  .item:first-child { border-top: 0; }
-  .item .t { font-weight: bold; color: #1a3c5e; }
-  .item .d { font-size: 13px; color: #666; margin: 2px 0 4px; }
-  .item a { color: #1a3c5e; font-size: 13px; }
-  .item .del {
-    background: none; color: #c0392b; border: 1px solid #c0392b; padding: 4px 10px;
-    font-size: 12px; border-radius: 4px; margin: 0; align-self: center;
-  }
+
+  .proj { border: 1px solid #e6e6e6; border-radius: 7px; padding: 16px; margin-top: 14px; }
+  .proj:first-of-type { margin-top: 0; }
+  .proj .p-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .proj .p-title { font-weight: bold; color: #1a3c5e; font-size: 15px; }
+  .proj .p-desc { font-size: 13px; color: #666; margin-top: 3px; }
+  .files { list-style: none; margin: 12px 0 0; }
+  .files li { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    border-top: 1px solid #f0f0f0; padding: 8px 0; font-size: 13px; }
+  .files li a { color: #1a3c5e; font-weight: bold; overflow-wrap: anywhere; }
+  .files .none { color: #999; border-top: 1px solid #f0f0f0; padding-top: 8px; }
+  .p-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .p-msg { font-size: 13px; margin-left: 4px; }
 </style>
 </head>
 <body>
@@ -65,21 +71,21 @@
     </div>
 
     <div class="card">
-      <h2>Upload a project (PDF)</h2>
-      <form id="uploadForm">
-        <label for="pdf">PDF file *</label>
-        <input type="file" id="pdf" accept="application/pdf,.pdf" required />
-        <label for="title">Title</label>
-        <input type="text" id="title" placeholder="e.g. Iconic Green Meadows" />
+      <h2>Add a new project</h2>
+      <form id="createForm">
+        <label for="title">Title *</label>
+        <input type="text" id="title" placeholder="e.g. Iconic Green Meadows" required />
         <label for="description">Description *</label>
         <textarea id="description" placeholder="e.g. DTCP approved plots at West Tambaram, development in progress" required></textarea>
-        <button id="upBtn" type="submit">Upload</button>
-        <div id="upMsg" class="msg"></div>
+        <label for="firstFile">First PDF file *</label>
+        <input type="file" id="firstFile" accept="application/pdf,.pdf" required />
+        <button id="createBtn" type="submit">Create project</button>
+        <div id="createMsg" class="msg"></div>
       </form>
     </div>
 
     <div class="card">
-      <h2>Uploaded projects</h2>
+      <h2>Projects</h2>
       <div id="list" class="muted">Loading&hellip;</div>
     </div>
   </section>
@@ -96,11 +102,9 @@
   var $ = function (id) { return document.getElementById(id); };
   var loginView = $('loginView'), adminView = $('adminView');
   var loginForm = $('loginForm'), loginMsg = $('loginMsg'), loginBtn = $('loginBtn');
-  var uploadForm = $('uploadForm'), upMsg = $('upMsg'), upBtn = $('upBtn');
+  var createForm = $('createForm'), createMsg = $('createMsg'), createBtn = $('createBtn');
 
-  function getSession() {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { return null; }
-  }
+  function getSession() { try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { return null; } }
   function setSession(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (e) {} }
   function clearSession() { try { localStorage.removeItem(LS_KEY); } catch (e) {} }
 
@@ -109,7 +113,6 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
-
   function uuid() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -117,18 +120,24 @@
       return v.toString(16);
     });
   }
+  function pubUrl(path) {
+    return SB_URL + '/storage/v1/object/public/' + BUCKET + '/' +
+      String(path).split('/').map(encodeURIComponent).join('/');
+  }
+  function objUrl(path) {
+    return SB_URL + '/storage/v1/object/' + BUCKET + '/' +
+      String(path).split('/').map(encodeURIComponent).join('/');
+  }
 
   function authHeaders() {
     var s = getSession();
     return { apikey: ANON, Authorization: 'Bearer ' + (s && s.access_token ? s.access_token : ANON) };
   }
-
   function refresh() {
     var s = getSession();
     if (!s || !s.refresh_token) return Promise.reject(new Error('no session'));
     return fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST',
-      headers: { apikey: ANON, 'Content-Type': 'application/json' },
+      method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: s.refresh_token })
     }).then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('refresh failed')); })
       .then(function (j) {
@@ -137,21 +146,19 @@
         return j;
       });
   }
-
-  // fetch with the session token; on 401 try one refresh then retry
   function api(url, opts) {
     opts = opts || {};
     var base = opts.headers || {};
     var run = function () {
-      var h = {}; for (var k in base) h[k] = base[k];
-      var a = authHeaders(); for (var k2 in a) h[k2] = a[k2];
+      var h = {}; var k;
+      for (k in base) h[k] = base[k];
+      var a = authHeaders(); for (k in a) h[k] = a[k];
       return fetch(url, { method: opts.method || 'GET', headers: h, body: opts.body });
     };
     return run().then(function (r) {
       if (r.status !== 401) return r;
       return refresh().then(run).catch(function () {
-        clearSession(); showLogin('Session expired - please sign in again.');
-        return r;
+        clearSession(); showLogin('Session expired - please sign in again.'); return r;
       });
     });
   }
@@ -171,19 +178,16 @@
     loginBtn.disabled = true;
     loginMsg.className = 'msg muted'; loginMsg.textContent = 'Signing in…';
     fetch(SB_URL + '/auth/v1/token?grant_type=password', {
-      method: 'POST',
-      headers: { apikey: ANON, 'Content-Type': 'application/json' },
+      method: 'POST', headers: { apikey: ANON, 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: $('email').value.trim(), password: $('password').value })
     }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
         if (res.ok && res.j.access_token) {
           setSession({
-            access_token: res.j.access_token,
-            refresh_token: res.j.refresh_token,
+            access_token: res.j.access_token, refresh_token: res.j.refresh_token,
             email: (res.j.user && res.j.user.email) || $('email').value.trim()
           });
-          loginMsg.textContent = ''; $('password').value = '';
-          showAdmin();
+          loginMsg.textContent = ''; $('password').value = ''; showAdmin();
         } else {
           loginMsg.className = 'msg err';
           loginMsg.textContent = res.j.error_description || res.j.msg || res.j.error || 'Sign in failed';
@@ -195,92 +199,169 @@
 
   $('signout').addEventListener('click', function () {
     var s = getSession();
-    if (s && s.access_token) {
-      fetch(SB_URL + '/auth/v1/logout', { method: 'POST', headers: authHeaders() }).catch(function () {});
-    }
+    if (s && s.access_token) fetch(SB_URL + '/auth/v1/logout', { method: 'POST', headers: authHeaders() }).catch(function () {});
     clearSession(); loginMsg.textContent = ''; showLogin();
   });
 
-  function loadList() {
-    var el = $('list');
-    el.className = 'muted'; el.textContent = 'Loading…';
-    api(SB_URL + '/rest/v1/projects?select=id,title,description,original_filename,storage_path,uploaded_at&order=uploaded_at.desc')
-      .then(function (r) { return r.ok ? r.json() : []; })
-      .then(function (rows) {
-        if (!rows.length) { el.className = 'muted'; el.textContent = 'No projects uploaded yet.'; return; }
-        el.className = '';
-        el.innerHTML = rows.map(function (p) {
-          var url = SB_URL + '/storage/v1/object/public/' + BUCKET + '/' + encodeURIComponent(p.storage_path);
-          return '<div class="item"><div>' +
-            '<div class="t">' + esc(p.title) + '</div>' +
-            '<div class="d">' + esc(p.description) + '</div>' +
-            '<a href="' + url + '" target="_blank" rel="noopener">View PDF &#8599;</a>' +
-            '</div><button class="del" data-id="' + esc(p.id) + '" data-path="' + esc(p.storage_path) + '">Delete</button></div>';
-        }).join('');
-      })
-      .catch(function () { el.className = 'msg err'; el.textContent = 'Could not load the list.'; });
-  }
-
-  $('list').addEventListener('click', function (e) {
-    var b = e.target.closest('.del'); if (!b) return;
-    if (!confirm('Delete this project?')) return;
-    b.disabled = true;
-    api(SB_URL + '/rest/v1/projects?id=eq.' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })
-      .then(function () {
-        return api(SB_URL + '/storage/v1/object/' + BUCKET + '/' + encodeURIComponent(b.dataset.path), { method: 'DELETE' });
-      })
-      .then(loadList)
-      .catch(function () { b.disabled = false; alert('Delete failed.'); });
-  });
-
-  uploadForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var file = $('pdf').files[0];
-    if (!file) return;
-    upBtn.disabled = true;
-    upMsg.className = 'msg muted'; upMsg.textContent = 'Reading file…';
-
-    file.arrayBuffer().then(function (buf) {
+  // ---- upload one file into a project ----
+  function readPdf(file) {
+    return file.arrayBuffer().then(function (buf) {
       var head = String.fromCharCode.apply(null, new Uint8Array(buf.slice(0, 5)));
       if (head !== '%PDF-') throw new Error('That file is not a PDF.');
-
-      var id = uuid();
-      var path = id + '.pdf';
-      var origName = (file.name || 'project.pdf').replace(/[^\w.\- ]+/g, '_');
-      var title = $('title').value.trim() || origName.replace(/\.pdf$/i, '');
-      var description = $('description').value.trim();
-      upMsg.textContent = 'Uploading ' + (file.size / 1048576).toFixed(1) + ' MB…';
-
-      return api(SB_URL + '/storage/v1/object/' + BUCKET + '/' + encodeURIComponent(path), {
+      return buf;
+    });
+  }
+  function uploadFile(projectId, file) {
+    return readPdf(file).then(function (buf) {
+      var fileId = uuid();
+      var path = projectId + '/' + fileId + '.pdf';
+      var origName = (file.name || 'file.pdf').replace(/[^\w.\- ]+/g, '_');
+      return api(objUrl(path), {
         method: 'POST',
         headers: { 'Content-Type': 'application/pdf', 'x-upsert': 'true' },
         body: buf
       }).then(function (r) {
         if (!r.ok) return r.text().then(function (t) { throw new Error('Storage: ' + t); });
-        return api(SB_URL + '/rest/v1/projects', {
+        return api(SB_URL + '/rest/v1/project_files', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
           body: JSON.stringify({
-            id: id, title: title, description: description,
-            original_filename: origName, storage_path: path, size_bytes: file.size
+            id: fileId, project_id: projectId, original_filename: origName,
+            storage_path: path, size_bytes: file.size
           })
         }).then(function (r2) {
           if (!r2.ok) {
-            api(SB_URL + '/storage/v1/object/' + BUCKET + '/' + encodeURIComponent(path), { method: 'DELETE' });
+            api(objUrl(path), { method: 'DELETE' });
             return r2.text().then(function (t) { throw new Error('Database: ' + t); });
           }
-          return r2.json();
         });
       });
+    });
+  }
+
+  // ---- create a project (row + first file) ----
+  createForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var file = $('firstFile').files[0];
+    if (!file) return;
+    createBtn.disabled = true;
+    createMsg.className = 'msg muted'; createMsg.textContent = 'Creating…';
+    var pid = uuid();
+    api(SB_URL + '/rest/v1/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ id: pid, title: $('title').value.trim(), description: $('description').value.trim() })
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error('Database: ' + t); });
+      createMsg.textContent = 'Uploading file…';
+      return uploadFile(pid, file);
     }).then(function () {
-      upMsg.className = 'msg ok'; upMsg.textContent = 'Uploaded.';
-      uploadForm.reset(); loadList();
+      createMsg.className = 'msg ok'; createMsg.textContent = 'Project created.';
+      createForm.reset(); loadList();
     }).catch(function (err) {
-      upMsg.className = 'msg err'; upMsg.textContent = String(err && err.message ? err.message : err);
-    }).finally(function () { upBtn.disabled = false; });
+      createMsg.className = 'msg err'; createMsg.textContent = String(err && err.message ? err.message : err);
+    }).finally(function () { createBtn.disabled = false; });
   });
 
-  // boot
+  // ---- list ----
+  function loadList() {
+    var el = $('list');
+    el.className = 'muted'; el.textContent = 'Loading…';
+    api(SB_URL + '/rest/v1/projects?select=id,title,description,uploaded_at,project_files(id,original_filename,storage_path,size_bytes)&order=uploaded_at.desc')
+      .then(function (r) { return r.ok ? r.json() : r.text().then(function (t) { throw new Error(t); }); })
+      .then(function (rows) {
+        if (!rows.length) { el.className = 'muted'; el.textContent = 'No projects yet.'; return; }
+        el.className = '';
+        el.innerHTML = rows.map(function (p) {
+          var files = (p.project_files || []).slice().sort(function (a, b) {
+            return String(a.original_filename).localeCompare(b.original_filename);
+          });
+          var fileHtml = files.length ? '<ul class="files">' + files.map(function (f) {
+            var kb = f.size_bytes ? ' <span class="muted">(' + (f.size_bytes / 1048576).toFixed(1) + ' MB)</span>' : '';
+            return '<li><a href="' + pubUrl(f.storage_path) + '" target="_blank" rel="noopener">' +
+              esc(f.original_filename) + '</a>' + kb +
+              '<button class="link del-file" data-file="' + esc(f.id) + '" data-path="' + esc(f.storage_path) + '">Delete file</button></li>';
+          }).join('') + '</ul>' : '<div class="none">No files yet.</div>';
+
+          return '<div class="proj" data-proj="' + esc(p.id) + '">' +
+            '<div class="p-head"><div>' +
+              '<div class="p-title">' + esc(p.title) + '</div>' +
+              '<div class="p-desc">' + esc(p.description) + '</div>' +
+            '</div></div>' +
+            fileHtml +
+            '<div class="p-actions">' +
+              '<button class="ghost small add-file" data-proj="' + esc(p.id) + '">+ Add file</button>' +
+              '<button class="link del-proj" data-proj="' + esc(p.id) + '">Delete project</button>' +
+              '<span class="p-msg"></span>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function (err) {
+        el.className = 'msg err';
+        el.textContent = 'Could not load projects. ' +
+          (/project_files/.test(String(err)) ? 'Run the project_files SQL in Supabase first.' : String(err).slice(0, 200));
+      });
+  }
+
+  // hidden file input reused for "+ Add file"
+  var addInput = document.createElement('input');
+  addInput.type = 'file';
+  addInput.accept = 'application/pdf,.pdf';
+  addInput.style.display = 'none';
+  document.body.appendChild(addInput);
+  var addTargetProj = null, addMsgEl = null;
+  addInput.addEventListener('change', function () {
+    var file = addInput.files[0];
+    if (!file || !addTargetProj) { addInput.value = ''; return; }
+    var pid = addTargetProj, msgEl = addMsgEl;
+    if (msgEl) { msgEl.className = 'p-msg muted'; msgEl.textContent = 'Uploading…'; }
+    uploadFile(pid, file).then(function () {
+      if (msgEl) { msgEl.className = 'p-msg ok'; msgEl.textContent = 'Added.'; }
+      loadList();
+    }).catch(function (err) {
+      if (msgEl) { msgEl.className = 'p-msg err'; msgEl.textContent = String(err && err.message ? err.message : err); }
+    }).finally(function () { addInput.value = ''; addTargetProj = null; addMsgEl = null; });
+  });
+
+  $('list').addEventListener('click', function (e) {
+    var add = e.target.closest('.add-file');
+    if (add) {
+      addTargetProj = add.dataset.proj;
+      addMsgEl = add.parentNode.querySelector('.p-msg');
+      addInput.click();
+      return;
+    }
+    var delF = e.target.closest('.del-file');
+    if (delF) {
+      if (!confirm('Delete this file?')) return;
+      delF.disabled = true;
+      api(SB_URL + '/rest/v1/project_files?id=eq.' + encodeURIComponent(delF.dataset.file), { method: 'DELETE' })
+        .then(function () { return api(objUrl(delF.dataset.path), { method: 'DELETE' }); })
+        .then(loadList)
+        .catch(function () { delF.disabled = false; alert('Delete failed.'); });
+      return;
+    }
+    var delP = e.target.closest('.del-proj');
+    if (delP) {
+      if (!confirm('Delete this project and ALL its files?')) return;
+      delP.disabled = true;
+      var pid = delP.dataset.proj;
+      api(SB_URL + '/rest/v1/project_files?project_id=eq.' + encodeURIComponent(pid) + '&select=storage_path')
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (files) {
+          var chain = Promise.resolve();
+          files.forEach(function (f) {
+            chain = chain.then(function () { return api(objUrl(f.storage_path), { method: 'DELETE' }); });
+          });
+          return chain;
+        })
+        .then(function () { return api(SB_URL + '/rest/v1/projects?id=eq.' + encodeURIComponent(pid), { method: 'DELETE' }); })
+        .then(loadList)
+        .catch(function () { delP.disabled = false; alert('Delete failed.'); });
+    }
+  });
+
   if (getSession()) { showAdmin(); } else { showLogin(); }
 })();
 </script>

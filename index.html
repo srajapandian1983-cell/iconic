@@ -290,6 +290,25 @@
       cursor: pointer;
     }
 
+    #ongoing-grid .files {
+      margin: 12px 0 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    #ongoing-grid .files .file-link {
+      color: #1a3c5e;
+      font-weight: bold;
+      font-size: 13px;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    #ongoing-grid .files .file-link:hover {
+      text-decoration: underline;
+    }
+
     /* Full-size PDF viewer overlay */
     .pdf-modal {
       position: fixed;
@@ -855,30 +874,34 @@
         openPdf(t.getAttribute('data-pdf'), t.getAttribute('data-title'));
       });
 
-      fetch(SB_URL + '/rest/v1/projects?select=id,title,description,original_filename,storage_path,uploaded_at&order=uploaded_at.desc', {
+      function pub(path) {
+        return SB_URL + '/storage/v1/object/public/' + BUCKET + '/' +
+          String(path).split('/').map(encodeURIComponent).join('/');
+      }
+
+      fetch(SB_URL + '/rest/v1/projects?select=id,title,description,uploaded_at,project_files(id,original_filename,storage_path)&order=uploaded_at.desc', {
         headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
       })
         .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
         .then(function (rows) {
           if (!rows || !rows.length) return; // no uploads yet - keep placeholder cards
-          grid.innerHTML = rows.map(function (p) {
-            var url = SB_URL + '/storage/v1/object/public/' + BUCKET + '/' + encodeURIComponent(p.storage_path);
-            var d = ' data-pdf="' + url + '" data-title="' + esc(p.title) + '"';
-            return '<div class="property has-pdf">' +
-              '<a class="photo" href="' + url + '"' + d + '>' +
-                '<span class="pdf-icon">&#128196;</span>' +
-                '<span class="pdf-name">Click to view</span>' +
-              '</a>' +
-              '<div class="info">' +
-                '<h3>' + esc(p.title) + '</h3>' +
-                (p.description ? '<p>' + esc(p.description) + '</p>' : '') +
-                '<p><a href="' + url + '"' + d + '>View full PDF &#128269;</a>' +
-                ' &nbsp;&middot;&nbsp; ' +
-                '<a href="' + url + '" target="_blank" rel="noopener">Open in new tab &#8599;</a></p>' +
-                '<p class="status">Ongoing</p>' +
-              '</div>' +
-            '</div>';
+          var cards = rows.map(function (p) {
+            var files = p.project_files || [];
+            if (!files.length) return '';
+            var links = files.map(function (f) {
+              var url = pub(f.storage_path);
+              return '<a class="file-link" href="' + url + '" data-pdf="' + url +
+                '" data-title="' + esc(p.title + ' — ' + f.original_filename) + '">' +
+                '&#128196; ' + esc(f.original_filename) + '</a>';
+            }).join('');
+            return '<div class="property has-pdf"><div class="info">' +
+              '<h3>' + esc(p.title) + '</h3>' +
+              (p.description ? '<p>' + esc(p.description) + '</p>' : '') +
+              '<div class="files">' + links + '</div>' +
+              '<p class="status">Ongoing</p>' +
+            '</div></div>';
           }).join('');
+          if (cards.replace(/\s/g, '')) grid.innerHTML = cards;
         })
         .catch(function () { /* keep placeholder cards on any error */ });
     })();

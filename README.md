@@ -19,10 +19,13 @@ just HTML + Supabase.
 
 ## How it works
 
-- **Metadata** (title, description, …) lives in a Supabase Postgres table `projects`.
-- **PDF files** live in a Supabase Storage bucket `project-pdfs` (public).
-- The **public site** reads the list with the *publishable* key (read-only).
-- **admin.html** requires a Supabase login; only signed-in admins can upload / delete.
+- A **project** (`projects` table) has a title + description and **one or more files**.
+- Each **file** (`project_files` table) is a PDF stored in the Supabase Storage
+  bucket `project-pdfs` (public), under a folder named after the project id.
+- The **public site** reads projects + their files with the *publishable* key (read-only).
+  Each file opens in a full-size in-page PDF viewer.
+- **admin.html** requires a Supabase login; only signed-in admins can create
+  projects, **＋ Add file** to a project, or delete files / projects.
 
 ## First-time setup (once)
 
@@ -31,9 +34,11 @@ just HTML + Supabase.
    Add user → *Create new user* → enter your email + a password, tick
    **Auto Confirm User**.
 
-## Adding a project
+## Adding projects & files
 
 1. Open **admin.html** (locally: double-click the file; or the live URL above).
-2. Sign in with the email / password from step 2 above.
-3. Pick the PDF, type a title + description, click **Upload**.
-4. It appears on the site under **Our Ongoing Projects**. Delete from the same page.
+2. Sign in with the email / password from the setup step.
+3. **Add a new project:** title + description + first PDF → *Create project*.
+4. **Add more files:** on any project in the list, click **＋ Add file** and pick a PDF.
+5. Everything shows on the site under **Our Ongoing Projects**; each file opens
+   in a large in-page viewer. Delete individual files or a whole project from admin.html.
