@@ -13,8 +13,8 @@ just HTML + Supabase.
 
 | Path | What it is |
 |------|-----------|
-| [index.html](index.html) | The public website. Reads the "Our Ongoing Projects" list from Supabase. |
-| [admin.html](admin.html) | Password-protected upload page. Sign in, then add / delete project PDFs. |
+| [index.html](index.html) | The public website. Reads "Our Ongoing Projects" from Supabase; has a contact / enquiry form. |
+| [admin.html](admin.html) | Login-protected admin. Manage projects + files, and read the contact requests. |
 | [supabase-setup.sql](supabase-setup.sql) | One-time Supabase setup (table, security rules, storage bucket). |
 
 ## How it works

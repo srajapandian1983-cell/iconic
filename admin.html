@@ -44,6 +44,12 @@
   .files .none { color: #999; border-top: 1px solid #f0f0f0; padding-top: 8px; }
   .p-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .p-msg { font-size: 13px; margin-left: 4px; }
+
+  .enq { border: 1px solid #e6e6e6; border-radius: 7px; padding: 14px; margin-top: 12px; }
+  .enq:first-of-type { margin-top: 0; }
+  .enq .p-desc a { color: #1a3c5e; }
+  .enq-msg { margin-top: 8px; font-size: 13px; white-space: pre-wrap;
+    background: #f4f7fb; border-radius: 5px; padding: 9px 11px; }
 </style>
 </head>
 <body>
@@ -87,6 +93,11 @@
     <div class="card">
       <h2>Projects</h2>
       <div id="list" class="muted">Loading&hellip;</div>
+    </div>
+
+    <div class="card">
+      <h2>Contact requests</h2>
+      <div id="enqList" class="muted">Loading&hellip;</div>
     </div>
   </section>
 
@@ -172,6 +183,7 @@
     loginView.hidden = true; adminView.hidden = false;
     var s = getSession(); $('who').textContent = (s && s.email) || '';
     loadList();
+    loadEnquiries();
   }
 
   loginForm.addEventListener('submit', function (e) {
@@ -377,6 +389,48 @@
         .then(loadList)
         .catch(function () { delP.disabled = false; alert('Delete failed.'); });
     }
+  });
+
+  // ---- contact requests ----
+  function loadEnquiries() {
+    var el = $('enqList');
+    el.className = 'muted'; el.textContent = 'Loading…';
+    api(SB_URL + '/rest/v1/enquiries?select=*&order=created_at.desc')
+      .then(function (r) { return r.ok ? r.json() : r.text().then(function (t) { throw new Error(t); }); })
+      .then(function (rows) {
+        if (!rows.length) { el.className = 'muted'; el.textContent = 'No contact requests yet.'; return; }
+        el.className = '';
+        el.innerHTML = rows.map(function (q) {
+          var when = '';
+          try { when = new Date(q.created_at).toLocaleString(); } catch (e) { when = q.created_at; }
+          return '<div class="enq">' +
+            '<div class="p-head"><div>' +
+              '<div class="p-title">' + esc(q.name) + '</div>' +
+              '<div class="p-desc">' +
+                '<a href="tel:' + esc(q.phone) + '">' + esc(q.phone) + '</a>' +
+                (q.email ? ' &nbsp;&middot;&nbsp; <a href="mailto:' + esc(q.email) + '">' + esc(q.email) + '</a>' : '') +
+                ' &nbsp;&middot;&nbsp; ' + esc(when) +
+              '</div>' +
+            '</div>' +
+            '<button class="link del-enq" data-id="' + esc(q.id) + '">Delete</button></div>' +
+            '<div class="enq-msg">' + esc(q.message) + '</div>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function (err) {
+        el.className = 'msg err';
+        el.textContent = 'Could not load contact requests. ' +
+          (/enquiries/.test(String(err)) ? 'Run the enquiries SQL in Supabase first.' : String(err).slice(0, 180));
+      });
+  }
+
+  $('enqList').addEventListener('click', function (e) {
+    var b = e.target.closest('.del-enq'); if (!b) return;
+    if (!confirm('Delete this contact request?')) return;
+    b.disabled = true;
+    api(SB_URL + '/rest/v1/enquiries?id=eq.' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })
+      .then(loadEnquiries)
+      .catch(function () { b.disabled = false; alert('Delete failed.'); });
   });
 
   if (getSession()) { showAdmin(); } else { showLogin(); }

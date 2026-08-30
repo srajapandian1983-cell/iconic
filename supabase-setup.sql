@@ -62,6 +62,32 @@ from public.projects p
 where p.storage_path is not null
   and not exists (select 1 from public.project_files f where f.storage_path = p.storage_path);
 
+-- 2b. Contact / enquiry requests from the website ------------------------
+create table if not exists public.enquiries (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  phone      text not null,
+  email      text,
+  message    text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.enquiries enable row level security;
+
+-- anyone can submit the contact form
+drop policy if exists "enquiries public insert" on public.enquiries;
+create policy "enquiries public insert" on public.enquiries
+  for insert to anon, authenticated with check (true);
+
+-- only signed-in admins can read / delete them
+drop policy if exists "enquiries auth read" on public.enquiries;
+create policy "enquiries auth read" on public.enquiries
+  for select to authenticated using (true);
+
+drop policy if exists "enquiries auth delete" on public.enquiries;
+create policy "enquiries auth delete" on public.enquiries
+  for delete to authenticated using (true);
+
 -- 3. Storage bucket for the files ---------------------------------------
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('project-pdfs', 'project-pdfs', true, 52428800)   -- 50 MB

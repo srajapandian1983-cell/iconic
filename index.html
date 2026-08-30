@@ -471,6 +471,90 @@
       color: var(--gold);
     }
 
+    .contact-form {
+      max-width: 520px;
+      margin: 30px auto 0;
+      background: var(--surface);
+      color: var(--ink);
+      border-top: 4px solid var(--gold);
+      border-radius: 12px;
+      padding: 26px 26px 28px;
+      text-align: left;
+      box-shadow: 0 16px 44px rgba(8, 20, 38, 0.45);
+    }
+
+    .contact-form h3 {
+      color: var(--navy);
+      font-size: 18px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .contact-form label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--navy);
+      margin: 12px 0 5px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .contact-form textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .contact-form .consent {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      margin-top: 14px;
+      font-size: 13px;
+      font-weight: normal;
+      color: var(--muted);
+    }
+
+    .contact-form .consent input {
+      width: auto;
+      margin-top: 4px;
+    }
+
+    .contact-form .btn {
+      width: 100%;
+      margin-top: 18px;
+      text-align: center;
+      border: 0;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .contact-form .hp {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+    }
+
+    .contact-form .form-msg {
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .contact-form .form-msg.ok { color: #2f7d32; }
+    .contact-form .form-msg.err { color: #c0392b; }
+
     /* Footer */
     footer {
       background: var(--navy-deep);
@@ -868,6 +952,25 @@
       <p><strong>SAM ICONIC Development Private Limited</strong></p>
       <p>195/28, Gandhi Road, West Tambaram, Chennai 600045</p>
       <p>Phone: <a href="tel:+916385106308">6385106308</a></p>
+
+      <form class="contact-form" id="enquiryForm">
+        <h3>Send us an enquiry</h3>
+        <input type="text" class="hp" id="eq-web" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <label for="eq-name">Your name *</label>
+        <input type="text" id="eq-name" required />
+        <label for="eq-phone">Phone number *</label>
+        <input type="tel" id="eq-phone" required />
+        <label for="eq-email">Email</label>
+        <input type="email" id="eq-email" />
+        <label for="eq-message">Message *</label>
+        <textarea id="eq-message" placeholder="Which project or service are you interested in?" required></textarea>
+        <label class="consent">
+          <input type="checkbox" id="eq-consent" required />
+          <span>I would like SAM ICONIC Development to contact me about this enquiry.</span>
+        </label>
+        <button type="submit" class="btn" id="eq-btn">Send enquiry</button>
+        <div class="form-msg" id="eq-msg"></div>
+      </form>
     </div>
   </section>
 
@@ -993,6 +1096,48 @@
           if (cards.replace(/\s/g, '')) grid.innerHTML = cards;
         })
         .catch(function () { /* keep placeholder cards on any error */ });
+    })();
+
+    // Contact / enquiry form -> stores a row in the Supabase 'enquiries' table.
+    (function () {
+      var SB_URL = 'https://mmmyliccvuawhyhcxusw.supabase.co';
+      var SB_KEY = 'sb_publishable_DCLPWFVScI8EadAJQCoT-A_bj5FTTP7';
+      var form = document.getElementById('enquiryForm');
+      if (!form) return;
+      var msg = document.getElementById('eq-msg');
+      var btn = document.getElementById('eq-btn');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (document.getElementById('eq-web').value) { form.reset(); return; } // honeypot
+        btn.disabled = true;
+        msg.className = 'form-msg'; msg.textContent = 'Sending…';
+        var body = {
+          name: document.getElementById('eq-name').value.trim(),
+          phone: document.getElementById('eq-phone').value.trim(),
+          email: document.getElementById('eq-email').value.trim() || null,
+          message: document.getElementById('eq-message').value.trim()
+        };
+        fetch(SB_URL + '/rest/v1/enquiries', {
+          method: 'POST',
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        }).then(function (r) {
+          if (r.ok) {
+            msg.className = 'form-msg ok';
+            msg.textContent = 'Thank you! We will contact you soon.';
+            form.reset();
+          } else {
+            return r.text().then(function (t) {
+              msg.className = 'form-msg err';
+              msg.textContent = 'Could not send - please call us on 6385106308. ' + t.slice(0, 120);
+            });
+          }
+        }).catch(function () {
+          msg.className = 'form-msg err';
+          msg.textContent = 'Network problem - please call us on 6385106308.';
+        }).finally(function () { btn.disabled = false; });
+      });
     })();
   </script>
 
