@@ -1,14 +1,16 @@
+# Secrets
+.env
+backend/.env
+*.local.env
+!.env.example
+
 # Python
 __pycache__/
 *.pyc
 .venv/
 venv/
 
-# Backend runtime data — ignore contents but keep the folders
-backend/uploads/*
-backend/data/*
-!backend/uploads/.gitkeep
-!backend/data/.gitkeep
+# Backend logs
 backend/*.log
 
 # OS / editor

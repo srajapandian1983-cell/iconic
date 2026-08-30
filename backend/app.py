@@ -2,33 +2,45 @@
 SAM ICONIC Development Private Limited - Real Estate
 Backend API : upload project brochures / documents as PDF with a description.
 
-Basic pattern only. Stores files on disk and metadata in a JSON file.
-No database, no auth yet - meant to be upgraded step by step.
+Storage is Supabase:
+  - file metadata  -> Postgres table  public.projects
+  - the PDF files   -> Storage bucket  project-pdfs   (public)
 
-Run:
+Setup:
     pip install -r requirements.txt
+    # 1. run schema.sql once in the Supabase SQL editor
+    # 2. copy .env.example -> .env and fill SUPABASE_SERVICE_ROLE_KEY
     python app.py
 
 Then open http://127.0.0.1:5000/
 """
 
-import json
 import os
-import re
-import threading
 import uuid
-from datetime import datetime, timezone
+import re
 
-from flask import Flask, jsonify, request, send_from_directory, abort
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request, redirect, abort
 from werkzeug.utils import secure_filename
+from supabase import create_client, Client
 
 # --------------------------------------------------------------------------
-# Configuration (override with environment variables)
+# Configuration
 # --------------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
-DATA_FILE = os.environ.get("DATA_FILE", os.path.join(BASE_DIR, "data", "projects.json"))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+BUCKET = os.environ.get("SUPABASE_BUCKET", "project-pdfs")
 MAX_CONTENT_MB = int(os.environ.get("MAX_CONTENT_MB", "25"))
+TABLE = "projects"
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise SystemExit(
+        "Missing Supabase config. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY "
+        "in backend/.env (see .env.example)."
+    )
 
 COMPANY = {
     "name": "SAM ICONIC Development Private Limited",
@@ -36,34 +48,10 @@ COMPANY = {
     "phone": "6385106308",
 }
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_MB * 1024 * 1024
-
-# One lock so concurrent uploads do not corrupt the JSON metadata file.
-_lock = threading.Lock()
-
-
-# --------------------------------------------------------------------------
-# Metadata store (simple JSON file)
-# --------------------------------------------------------------------------
-def _read_all():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, "r", encoding="utf-8") as fh:
-        try:
-            return json.load(fh)
-        except json.JSONDecodeError:
-            return []
-
-
-def _write_all(records):
-    tmp = DATA_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(records, fh, indent=2, ensure_ascii=False)
-    os.replace(tmp, DATA_FILE)
 
 
 # --------------------------------------------------------------------------
@@ -79,22 +67,25 @@ def is_pdf(file_storage):
     return head == b"%PDF-"
 
 
-def public_record(rec):
-    """Shape a stored record for the API response."""
+def public_url(storage_path):
+    return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{storage_path}"
+
+
+def public_record(row):
+    """Shape a table row for the API response."""
     return {
-        "id": rec["id"],
-        "title": rec["title"],
-        "description": rec["description"],
-        "original_filename": rec["original_filename"],
-        "size_bytes": rec["size_bytes"],
-        "uploaded_at": rec["uploaded_at"],
-        "file_url": f"/api/projects/{rec['id']}/file",
+        "id": row["id"],
+        "title": row["title"],
+        "description": row["description"],
+        "original_filename": row["original_filename"],
+        "size_bytes": row["size_bytes"],
+        "uploaded_at": row["uploaded_at"],
+        "file_url": public_url(row["storage_path"]),
     }
 
 
 @app.after_request
 def add_cors(resp):
-    # Allow the static site (index.html) to call this API from the browser.
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
@@ -109,7 +100,8 @@ def index():
     return jsonify(
         {
             "company": COMPANY,
-            "service": "Real estate project upload API",
+            "service": "Real estate project upload API (Supabase)",
+            "storage": {"table": TABLE, "bucket": BUCKET},
             "endpoints": {
                 "list_projects": "GET /api/projects",
                 "get_project": "GET /api/projects/<id>",
@@ -123,16 +115,21 @@ def index():
 
 @app.get("/api/projects")
 def list_projects():
-    records = sorted(_read_all(), key=lambda r: r["uploaded_at"], reverse=True)
-    return jsonify([public_record(r) for r in records])
+    res = (
+        supabase.table(TABLE)
+        .select("*")
+        .order("uploaded_at", desc=True)
+        .execute()
+    )
+    return jsonify([public_record(r) for r in res.data])
 
 
 @app.get("/api/projects/<pid>")
 def get_project(pid):
-    for rec in _read_all():
-        if rec["id"] == pid:
-            return jsonify(public_record(rec))
-    abort(404, description="Project not found")
+    res = supabase.table(TABLE).select("*").eq("id", pid).limit(1).execute()
+    if not res.data:
+        abort(404, description="Project not found")
+    return jsonify(public_record(res.data[0]))
 
 
 @app.post("/api/projects")
@@ -153,65 +150,63 @@ def upload_project():
     if not title:
         title = re.sub(r"\.pdf$", "", original, flags=re.IGNORECASE)
 
-    pid = uuid.uuid4().hex
-    stored_name = f"{pid}.pdf"
-    pdf.save(os.path.join(UPLOAD_DIR, stored_name))
-    size_bytes = os.path.getsize(os.path.join(UPLOAD_DIR, stored_name))
+    pid = str(uuid.uuid4())
+    storage_path = f"{pid}.pdf"
+    data = pdf.read()
 
-    record = {
+    try:
+        supabase.storage.from_(BUCKET).upload(
+            storage_path,
+            data,
+            {"content-type": "application/pdf", "upsert": "true"},
+        )
+    except Exception as exc:  # noqa: BLE001
+        abort(502, description=f"Storage upload failed: {exc}")
+
+    row = {
         "id": pid,
         "title": title,
         "description": description,
         "original_filename": original,
-        "stored_filename": stored_name,
-        "size_bytes": size_bytes,
-        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "storage_path": storage_path,
+        "size_bytes": len(data),
     }
 
-    with _lock:
-        records = _read_all()
-        records.append(record)
-        _write_all(records)
+    try:
+        res = supabase.table(TABLE).insert(row).execute()
+    except Exception as exc:  # noqa: BLE001
+        supabase.storage.from_(BUCKET).remove([storage_path])
+        abort(502, description=f"Database insert failed: {exc}")
 
-    return jsonify(public_record(record)), 201
+    return jsonify(public_record(res.data[0])), 201
 
 
 @app.get("/api/projects/<pid>/file")
 def download_file(pid):
-    for rec in _read_all():
-        if rec["id"] == pid:
-            return send_from_directory(
-                UPLOAD_DIR,
-                rec["stored_filename"],
-                mimetype="application/pdf",
-                as_attachment=False,
-                download_name=rec["original_filename"],
-            )
-    abort(404, description="Project not found")
+    res = supabase.table(TABLE).select("storage_path").eq("id", pid).limit(1).execute()
+    if not res.data:
+        abort(404, description="Project not found")
+    return redirect(public_url(res.data[0]["storage_path"]), code=302)
 
 
 @app.delete("/api/projects/<pid>")
 def delete_project(pid):
-    with _lock:
-        records = _read_all()
-        keep = [rec for rec in records if rec["id"] != pid]
-        removed = next((rec for rec in records if rec["id"] == pid), None)
-        if removed is None:
-            abort(404, description="Project not found")
-        _write_all(keep)
+    res = supabase.table(TABLE).select("storage_path").eq("id", pid).limit(1).execute()
+    if not res.data:
+        abort(404, description="Project not found")
 
-    path = os.path.join(UPLOAD_DIR, removed["stored_filename"])
-    if os.path.exists(path):
-        os.remove(path)
+    supabase.storage.from_(BUCKET).remove([res.data[0]["storage_path"]])
+    supabase.table(TABLE).delete().eq("id", pid).execute()
     return jsonify({"deleted": pid})
 
 
 # --------------------------------------------------------------------------
-# Error handling -> always return JSON
+# Error handling -> always JSON
 # --------------------------------------------------------------------------
 @app.errorhandler(400)
 @app.errorhandler(404)
 @app.errorhandler(413)
+@app.errorhandler(502)
 def json_error(err):
     code = getattr(err, "code", 500)
     msg = getattr(err, "description", str(err))

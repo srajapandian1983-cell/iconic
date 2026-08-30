@@ -12,7 +12,7 @@ Website and project-upload backend for **SAM ICONIC Development Private Limited*
 | Path | Description |
 |------|-------------|
 | [index.html](index.html) | Single-page real estate website (hero slideshow, services, featured properties, contact) |
-| [backend/](backend/) | Flask API to upload project brochures as PDF with a description — see [backend/README.md](backend/README.md) |
+| [backend/](backend/) | Flask API to upload project brochures as PDF with a description, backed by Supabase (Postgres table + Storage bucket) — see [backend/README.md](backend/README.md) |
 
 ## Run the website
 
@@ -20,9 +20,13 @@ Open `index.html` in any browser.
 
 ## Run the backend
 
+Needs a Supabase project. See [backend/README.md](backend/README.md) for the
+one-time schema setup and `.env` values.
+
 ```bash
 cd backend
 python -m pip install -r requirements.txt
+copy .env.example .env          # then fill SUPABASE_SERVICE_ROLE_KEY
 python app.py
 ```
 
