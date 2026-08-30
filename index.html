@@ -265,6 +265,11 @@
       padding: 16px;
       text-align: center;
       background: #eef2f7;
+      cursor: pointer;
+    }
+
+    #ongoing-grid .property.has-pdf .photo:hover {
+      background: #e3e9f1;
     }
 
     #ongoing-grid .property.has-pdf .pdf-icon {
@@ -273,16 +278,86 @@
     }
 
     #ongoing-grid .property.has-pdf .pdf-name {
-      font-size: 12px;
-      font-weight: normal;
-      color: #5a6b7d;
-      word-break: break-all;
+      font-size: 13px;
+      font-weight: bold;
+      color: #1a3c5e;
     }
 
     #ongoing-grid .info a {
       color: #1a3c5e;
       font-weight: bold;
       text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* Full-size PDF viewer overlay */
+    .pdf-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(10, 22, 40, 0.78);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .pdf-modal[hidden] {
+      display: none;
+    }
+
+    .pdf-modal-box {
+      background: #fff;
+      width: 1000px;
+      max-width: 100%;
+      height: 90vh;
+      max-height: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .pdf-modal-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      background: #1a3c5e;
+      color: #fff;
+    }
+
+    .pdf-modal-bar .m-title {
+      flex: 1;
+      font-weight: bold;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pdf-modal-bar a {
+      color: #f0a500;
+      font-size: 14px;
+      font-weight: bold;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .pdf-modal-bar button {
+      background: none;
+      border: 0;
+      color: #fff;
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .pdf-modal iframe {
+      flex: 1;
+      width: 100%;
+      border: 0;
     }
 
     /* Contact */
@@ -710,6 +785,17 @@
     </div>
   </footer>
 
+  <div class="pdf-modal" id="pdf-modal" hidden>
+    <div class="pdf-modal-box">
+      <div class="pdf-modal-bar">
+        <span class="m-title" id="pdf-modal-title"></span>
+        <a id="pdf-modal-open" href="#" target="_blank" rel="noopener">Open in new tab &#8599;</a>
+        <button type="button" id="pdf-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <iframe id="pdf-modal-frame" title="Project PDF"></iframe>
+    </div>
+  </div>
+
   <script>
     // Hero background slideshow: cross-fade between the building / layout templates
     (function () {
@@ -724,9 +810,8 @@
       }, 4500);
     })();
 
-    // Ongoing Projects: load uploaded project PDFs from Supabase.
-    // Uses the publishable/anon key (safe in client code; read is limited by RLS).
-    // Until the key below is filled in, the static placeholder cards are kept.
+    // Ongoing Projects: load uploaded project PDFs from Supabase and show each
+    // one in a full-size in-page PDF viewer. Publishable key = read-only (RLS).
     (function () {
       var SB_URL = 'https://mmmyliccvuawhyhcxusw.supabase.co';
       var SB_KEY = 'sb_publishable_DCLPWFVScI8EadAJQCoT-A_bj5FTTP7';
@@ -740,6 +825,36 @@
         });
       }
 
+      // ---- full-size PDF viewer overlay ----
+      var modal = document.getElementById('pdf-modal');
+      var frame = document.getElementById('pdf-modal-frame');
+      var mTitle = document.getElementById('pdf-modal-title');
+      var mOpen = document.getElementById('pdf-modal-open');
+
+      function openPdf(url, title) {
+        mTitle.textContent = title || 'Project PDF';
+        mOpen.href = url;
+        frame.src = url + '#view=FitH';
+        modal.hidden = false;
+        document.body.style.overflow = 'hidden';
+      }
+      function closePdf() {
+        modal.hidden = true;
+        frame.src = 'about:blank';
+        document.body.style.overflow = '';
+      }
+      document.getElementById('pdf-modal-close').addEventListener('click', closePdf);
+      modal.addEventListener('click', function (e) { if (e.target === modal) closePdf(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) closePdf();
+      });
+      grid.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-pdf]');
+        if (!t) return;
+        e.preventDefault();
+        openPdf(t.getAttribute('data-pdf'), t.getAttribute('data-title'));
+      });
+
       fetch(SB_URL + '/rest/v1/projects?select=id,title,description,original_filename,storage_path,uploaded_at&order=uploaded_at.desc', {
         headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
       })
@@ -748,15 +863,18 @@
           if (!rows || !rows.length) return; // no uploads yet - keep placeholder cards
           grid.innerHTML = rows.map(function (p) {
             var url = SB_URL + '/storage/v1/object/public/' + BUCKET + '/' + encodeURIComponent(p.storage_path);
+            var d = ' data-pdf="' + url + '" data-title="' + esc(p.title) + '"';
             return '<div class="property has-pdf">' +
-              '<a class="photo" href="' + url + '" target="_blank" rel="noopener">' +
-                '<span class="pdf-icon">📄</span>' +
-                '<span class="pdf-name">' + esc(p.original_filename || 'project.pdf') + '</span>' +
+              '<a class="photo" href="' + url + '"' + d + '>' +
+                '<span class="pdf-icon">&#128196;</span>' +
+                '<span class="pdf-name">Click to view</span>' +
               '</a>' +
               '<div class="info">' +
                 '<h3>' + esc(p.title) + '</h3>' +
                 (p.description ? '<p>' + esc(p.description) + '</p>' : '') +
-                '<p><a href="' + url + '" target="_blank" rel="noopener">View / download PDF &#8599;</a></p>' +
+                '<p><a href="' + url + '"' + d + '>View full PDF &#128269;</a>' +
+                ' &nbsp;&middot;&nbsp; ' +
+                '<a href="' + url + '" target="_blank" rel="noopener">Open in new tab &#8599;</a></p>' +
                 '<p class="status">Ongoing</p>' +
               '</div>' +
             '</div>';
