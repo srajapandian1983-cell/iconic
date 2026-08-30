@@ -252,6 +252,39 @@
       border-radius: 20px;
     }
 
+    /* Ongoing Projects - uploaded PDF cards */
+    #ongoing-grid {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
+      justify-content: center;
+    }
+
+    #ongoing-grid .property.has-pdf .photo {
+      flex-direction: column;
+      gap: 8px;
+      height: 170px;
+      padding: 16px;
+      text-align: center;
+      background: #eef2f7;
+    }
+
+    #ongoing-grid .property.has-pdf .pdf-icon {
+      font-size: 42px;
+      line-height: 1;
+    }
+
+    #ongoing-grid .property.has-pdf .pdf-name {
+      font-size: 12px;
+      font-weight: normal;
+      color: #5a6b7d;
+      word-break: break-all;
+    }
+
+    #ongoing-grid .info a {
+      color: #1a3c5e;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
     /* Contact */
     .contact {
       background: #1a3c5e;
@@ -630,7 +663,7 @@
   <section class="ongoing" id="ongoing">
     <div class="container">
       <h2>Our Ongoing Projects</h2>
-      <div class="grid">
+      <div class="grid" id="ongoing-grid">
         <div class="property">
           <div class="photo">Iconic Green Meadows</div>
           <div class="info">
@@ -689,6 +722,47 @@
         i = (i + 1) % slides.length;
         slides[i].classList.add('is-active');
       }, 4500);
+    })();
+
+    // Ongoing Projects: load uploaded project PDFs from Supabase.
+    // Uses the publishable/anon key (safe in client code; read is limited by RLS).
+    // Until the key below is filled in, the static placeholder cards are kept.
+    (function () {
+      var SB_URL = 'https://mmmyliccvuawhyhcxusw.supabase.co';
+      var SB_KEY = 'sb_publishable_DCLPWFVScI8EadAJQCoT-A_bj5FTTP7';
+      var BUCKET = 'project-pdfs';
+      var grid = document.getElementById('ongoing-grid');
+      if (!grid || SB_KEY.indexOf('SUPABASE_') === 0) return;
+
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+      }
+
+      fetch(SB_URL + '/rest/v1/projects?select=id,title,description,original_filename,storage_path,uploaded_at&order=uploaded_at.desc', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function (rows) {
+          if (!rows || !rows.length) return; // no uploads yet - keep placeholder cards
+          grid.innerHTML = rows.map(function (p) {
+            var url = SB_URL + '/storage/v1/object/public/' + BUCKET + '/' + encodeURIComponent(p.storage_path);
+            return '<div class="property has-pdf">' +
+              '<a class="photo" href="' + url + '" target="_blank" rel="noopener">' +
+                '<span class="pdf-icon">📄</span>' +
+                '<span class="pdf-name">' + esc(p.original_filename || 'project.pdf') + '</span>' +
+              '</a>' +
+              '<div class="info">' +
+                '<h3>' + esc(p.title) + '</h3>' +
+                (p.description ? '<p>' + esc(p.description) + '</p>' : '') +
+                '<p><a href="' + url + '" target="_blank" rel="noopener">View / download PDF &#8599;</a></p>' +
+                '<p class="status">Ongoing</p>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+        })
+        .catch(function () { /* keep placeholder cards on any error */ });
     })();
   </script>
 
