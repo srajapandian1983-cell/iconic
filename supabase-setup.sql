@@ -64,14 +64,13 @@ where p.storage_path is not null
 
 -- 3. Storage bucket for the files ---------------------------------------
 insert into storage.buckets (id, name, public, file_size_limit)
-values ('project-pdfs', 'project-pdfs', true, 104857600)   -- 100 MB
+values ('project-pdfs', 'project-pdfs', true, 52428800)   -- 50 MB
 on conflict (id) do nothing;
 
--- Raise the limit on an already-created bucket:
-update storage.buckets set file_size_limit = 104857600 where id = 'project-pdfs';
--- NOTE: also set Dashboard -> Storage -> Settings -> "Upload file size limit"
--- to 100 MB. The project-wide limit caps every bucket, and the free plan
--- maxes out at 50 MB (100 MB needs a paid plan).
+-- Set the limit on an already-created bucket:
+update storage.buckets set file_size_limit = 52428800 where id = 'project-pdfs';
+-- The Dashboard -> Storage -> Settings "Upload file size limit" (free plan
+-- default 50 MB) is the project-wide cap; keep it at 50 MB.
 
 -- Storage policies (INSERT/DELETE for signed-in admins) must be added in the
 -- dashboard: Storage -> Policies -> New policy -> For full customization
