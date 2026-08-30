@@ -33,9 +33,15 @@ Server runs at `http://127.0.0.1:5000/`.
 
 ## Uploading a project
 
-Open **`http://127.0.0.1:5000/upload`** in a browser. Pick the PDF, type a
-title and description, click **Upload**. The same page lists every uploaded
-project with a **View PDF** link and a **Delete** button.
+**Easiest:** double-click **`START-UPLOAD.bat`** in this folder. It starts the
+server and opens the upload page automatically. Keep that window open while
+uploading; close it when done.
+
+Or manually: run `python app.py`, then open **`http://127.0.0.1:5000/upload`**.
+
+On the page: pick the PDF, type a title and description, click **Upload**. The
+same page lists every uploaded project with a **View PDF** link and a
+**Delete** button.
 
 Uploaded projects appear automatically in the "Our Ongoing Projects" section
 of the public website.
