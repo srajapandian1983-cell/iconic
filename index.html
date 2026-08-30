@@ -471,9 +471,30 @@
       color: var(--gold);
     }
 
+    .contact-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      align-items: flex-start;
+      justify-content: center;
+      text-align: left;
+      margin-top: 6px;
+    }
+
+    .contact-info {
+      flex: 1 1 280px;
+      max-width: 380px;
+      padding-top: 4px;
+    }
+
+    .contact-info p {
+      margin-bottom: 10px;
+    }
+
     .contact-form {
+      flex: 1 1 420px;
       max-width: 520px;
-      margin: 30px auto 0;
+      margin: 0;
       background: var(--surface);
       color: var(--ink);
       border-top: 4px solid var(--gold);
@@ -995,18 +1016,21 @@
   <section class="contact" id="contact">
     <div class="container">
       <h2>Contact Us</h2>
-      <p><strong>SAM ICONIC Development Private Limited</strong></p>
-      <p>195/28, Gandhi Road, West Tambaram, Chennai 600045</p>
-      <p>Phone: <a href="tel:+916385106308">6385106308</a></p>
-      <p>
-        <a class="btn-wa" href="https://wa.me/916385106308?text=Hi%20SAM%20ICONIC%20Development%2C%20I%20would%20like%20to%20know%20more%20about%20your%20projects." target="_blank" rel="noopener">
-          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16.003 3C9.373 3 4 8.373 4 15c0 2.35.676 4.542 1.844 6.398L4 29l7.82-1.8A11.93 11.93 0 0016.003 27C22.63 27 28 21.627 28 15S22.63 3 16.003 3zm0 21.5c-1.86 0-3.6-.5-5.1-1.37l-.365-.216-3.79.872.807-3.69-.24-.38A9.46 9.46 0 016.5 15c0-5.238 4.265-9.5 9.503-9.5 5.238 0 9.497 4.262 9.497 9.5s-4.26 9.5-9.497 9.5zm5.22-7.11c-.287-.144-1.7-.84-1.963-.936-.263-.096-.454-.144-.646.144-.192.287-.74.936-.907 1.128-.167.192-.335.216-.622.072-.287-.144-1.213-.447-2.31-1.426-.854-.762-1.43-1.703-1.598-1.99-.167-.287-.018-.442.126-.586.13-.13.287-.335.43-.503.144-.167.192-.287.287-.478.096-.192.048-.36-.024-.503-.072-.144-.646-1.56-.886-2.135-.233-.56-.47-.485-.646-.494l-.55-.01c-.192 0-.503.072-.766.36-.263.287-1.006.983-1.006 2.4 0 1.415 1.03 2.783 1.174 2.975.144.192 2.03 3.1 4.918 4.347.687.297 1.223.474 1.64.607.69.22 1.317.188 1.813.114.553-.082 1.7-.695 1.94-1.366.24-.67.24-1.246.167-1.366-.072-.12-.263-.192-.55-.336z"/></svg>
-          Chat on WhatsApp
-        </a>
-      </p>
+      <div class="contact-grid">
+        <div class="contact-info">
+          <p><strong>SAM ICONIC Development Private Limited</strong></p>
+          <p>195/28, Gandhi Road, West Tambaram, Chennai 600045</p>
+          <p>Phone: <a href="tel:+916385106308">6385106308</a></p>
+          <p>
+            <a class="btn-wa" href="https://wa.me/916385106308?text=Hi%20SAM%20ICONIC%20Development%2C%20I%20would%20like%20to%20know%20more%20about%20your%20projects." target="_blank" rel="noopener">
+              <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M16.003 3C9.373 3 4 8.373 4 15c0 2.35.676 4.542 1.844 6.398L4 29l7.82-1.8A11.93 11.93 0 0016.003 27C22.63 27 28 21.627 28 15S22.63 3 16.003 3zm0 21.5c-1.86 0-3.6-.5-5.1-1.37l-.365-.216-3.79.872.807-3.69-.24-.38A9.46 9.46 0 016.5 15c0-5.238 4.265-9.5 9.503-9.5 5.238 0 9.497 4.262 9.497 9.5s-4.26 9.5-9.497 9.5zm5.22-7.11c-.287-.144-1.7-.84-1.963-.936-.263-.096-.454-.144-.646.144-.192.287-.74.936-.907 1.128-.167.192-.335.216-.622.072-.287-.144-1.213-.447-2.31-1.426-.854-.762-1.43-1.703-1.598-1.99-.167-.287-.018-.442.126-.586.13-.13.287-.335.43-.503.144-.167.192-.287.287-.478.096-.192.048-.36-.024-.503-.072-.144-.646-1.56-.886-2.135-.233-.56-.47-.485-.646-.494l-.55-.01c-.192 0-.503.072-.766.36-.263.287-1.006.983-1.006 2.4 0 1.415 1.03 2.783 1.174 2.975.144.192 2.03 3.1 4.918 4.347.687.297 1.223.474 1.64.607.69.22 1.317.188 1.813.114.553-.082 1.7-.695 1.94-1.366.24-.67.24-1.246.167-1.366-.072-.12-.263-.192-.55-.336z"/></svg>
+              Chat on WhatsApp
+            </a>
+          </p>
+        </div>
 
-      <form class="contact-form" id="enquiryForm">
-        <h3>Send us an enquiry</h3>
+        <form class="contact-form" id="enquiryForm">
+          <h3>Send us an enquiry</h3>
         <input type="text" class="hp" id="eq-web" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <label for="eq-name">Your name *</label>
         <input type="text" id="eq-name" required />
@@ -1023,6 +1047,7 @@
         <button type="submit" class="btn" id="eq-btn">Send enquiry</button>
         <div class="form-msg" id="eq-msg"></div>
       </form>
+      </div>
     </div>
   </section>
 
