@@ -98,6 +98,7 @@
   var ANON   = 'sb_publishable_DCLPWFVScI8EadAJQCoT-A_bj5FTTP7';
   var BUCKET = 'project-pdfs';
   var LS_KEY = 'iconic_admin_session';
+  var MAX_MB = 100; // must not exceed the Supabase Storage upload limit
 
   var $ = function (id) { return document.getElementById(id); };
   var loginView = $('loginView'), adminView = $('adminView');
@@ -223,6 +224,11 @@
     });
   }
   function uploadFile(projectId, file) {
+    if (file.size > MAX_MB * 1048576) {
+      return Promise.reject(new Error(
+        'This file is ' + (file.size / 1048576).toFixed(0) + ' MB. The limit is ' + MAX_MB + ' MB.'
+      ));
+    }
     return readFile(file).then(function (d) {
       var fileId = uuid();
       var path = projectId + '/' + fileId + '.' + d.ext;
