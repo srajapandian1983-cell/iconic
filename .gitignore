@@ -1,17 +1,6 @@
 # Secrets
 .env
-backend/.env
-*.local.env
-!.env.example
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-venv/
-
-# Backend logs
-backend/*.log
+*.local
 
 # OS / editor
 .DS_Store
