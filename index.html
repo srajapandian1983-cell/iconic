@@ -373,10 +373,28 @@
       padding: 0 4px;
     }
 
-    .pdf-modal iframe {
+    .pdf-modal-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      background: #2b2b2b;
+    }
+
+    .pdf-modal-body iframe {
       flex: 1;
       width: 100%;
       border: 0;
+    }
+
+    .pdf-modal-body img {
+      margin: auto;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .pdf-modal-body [hidden] {
+      display: none;
     }
 
     /* Contact */
@@ -811,7 +829,10 @@
         <a id="pdf-modal-open" href="#" target="_blank" rel="noopener">Open in new tab &#8599;</a>
         <button type="button" id="pdf-modal-close" aria-label="Close">&times;</button>
       </div>
-      <iframe id="pdf-modal-frame" title="Project PDF"></iframe>
+      <div class="pdf-modal-body">
+        <iframe id="pdf-modal-frame" title="Project file"></iframe>
+        <img id="pdf-modal-img" alt="" hidden />
+      </div>
     </div>
   </div>
 
@@ -844,34 +865,44 @@
         });
       }
 
-      // ---- full-size PDF viewer overlay ----
+      // ---- full-size file viewer overlay (PDF or image) ----
       var modal = document.getElementById('pdf-modal');
       var frame = document.getElementById('pdf-modal-frame');
+      var mImg = document.getElementById('pdf-modal-img');
       var mTitle = document.getElementById('pdf-modal-title');
       var mOpen = document.getElementById('pdf-modal-open');
 
-      function openPdf(url, title) {
-        mTitle.textContent = title || 'Project PDF';
+      function kindOf(name) {
+        return /\.(jpe?g|png|gif|webp)$/i.test(name || '') ? 'image' : 'pdf';
+      }
+      function openFile(url, title, kind) {
+        mTitle.textContent = title || 'Project file';
         mOpen.href = url;
-        frame.src = url + '#view=FitH';
+        if (kind === 'image') {
+          frame.hidden = true; frame.src = 'about:blank';
+          mImg.hidden = false; mImg.src = url;
+        } else {
+          mImg.hidden = true; mImg.src = '';
+          frame.hidden = false; frame.src = url + '#view=FitH';
+        }
         modal.hidden = false;
         document.body.style.overflow = 'hidden';
       }
-      function closePdf() {
+      function closeFile() {
         modal.hidden = true;
-        frame.src = 'about:blank';
+        frame.src = 'about:blank'; mImg.src = '';
         document.body.style.overflow = '';
       }
-      document.getElementById('pdf-modal-close').addEventListener('click', closePdf);
-      modal.addEventListener('click', function (e) { if (e.target === modal) closePdf(); });
+      document.getElementById('pdf-modal-close').addEventListener('click', closeFile);
+      modal.addEventListener('click', function (e) { if (e.target === modal) closeFile(); });
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !modal.hidden) closePdf();
+        if (e.key === 'Escape' && !modal.hidden) closeFile();
       });
       grid.addEventListener('click', function (e) {
-        var t = e.target.closest('[data-pdf]');
+        var t = e.target.closest('[data-file]');
         if (!t) return;
         e.preventDefault();
-        openPdf(t.getAttribute('data-pdf'), t.getAttribute('data-title'));
+        openFile(t.getAttribute('data-file'), t.getAttribute('data-title'), t.getAttribute('data-kind'));
       });
 
       function pub(path) {
@@ -890,9 +921,12 @@
             if (!files.length) return '';
             var links = files.map(function (f) {
               var url = pub(f.storage_path);
-              return '<a class="file-link" href="' + url + '" data-pdf="' + url +
+              var kind = kindOf(f.storage_path || f.original_filename);
+              var icon = kind === 'image' ? '&#128444;' : '&#128196;';
+              return '<a class="file-link" href="' + url + '" data-file="' + url +
+                '" data-kind="' + kind +
                 '" data-title="' + esc(p.title + ' — ' + f.original_filename) + '">' +
-                '&#128196; ' + esc(f.original_filename) + '</a>';
+                icon + ' ' + esc(f.original_filename) + '</a>';
             }).join('');
             return '<div class="property has-pdf"><div class="info">' +
               '<h3>' + esc(p.title) + '</h3>' +

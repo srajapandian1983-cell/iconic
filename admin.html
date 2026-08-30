@@ -77,8 +77,8 @@
         <input type="text" id="title" placeholder="e.g. Iconic Green Meadows" required />
         <label for="description">Description *</label>
         <textarea id="description" placeholder="e.g. DTCP approved plots at West Tambaram, development in progress" required></textarea>
-        <label for="firstFile">First PDF file *</label>
-        <input type="file" id="firstFile" accept="application/pdf,.pdf" required />
+        <label for="firstFile">First file &mdash; PDF, JPG or PNG *</label>
+        <input type="file" id="firstFile" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" required />
         <button id="createBtn" type="submit">Create project</button>
         <div id="createMsg" class="msg"></div>
       </form>
@@ -203,23 +203,34 @@
     clearSession(); loginMsg.textContent = ''; showLogin();
   });
 
-  // ---- upload one file into a project ----
-  function readPdf(file) {
+  // ---- upload one file into a project (PDF, JPG or PNG) ----
+  function detectFile(buf) {
+    var b = new Uint8Array(buf);
+    if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46 && b[4] === 0x2D)
+      return { ct: 'application/pdf', ext: 'pdf' };
+    if (b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF)
+      return { ct: 'image/jpeg', ext: 'jpg' };
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47)
+      return { ct: 'image/png', ext: 'png' };
+    return null;
+  }
+  function readFile(file) {
     return file.arrayBuffer().then(function (buf) {
-      var head = String.fromCharCode.apply(null, new Uint8Array(buf.slice(0, 5)));
-      if (head !== '%PDF-') throw new Error('That file is not a PDF.');
-      return buf;
+      var d = detectFile(buf);
+      if (!d) throw new Error('Only PDF, JPG or PNG files are allowed.');
+      d.buf = buf;
+      return d;
     });
   }
   function uploadFile(projectId, file) {
-    return readPdf(file).then(function (buf) {
+    return readFile(file).then(function (d) {
       var fileId = uuid();
-      var path = projectId + '/' + fileId + '.pdf';
-      var origName = (file.name || 'file.pdf').replace(/[^\w.\- ]+/g, '_');
+      var path = projectId + '/' + fileId + '.' + d.ext;
+      var origName = (file.name || ('file.' + d.ext)).replace(/[^\w.\- ]+/g, '_');
       return api(objUrl(path), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/pdf', 'x-upsert': 'true' },
-        body: buf
+        headers: { 'Content-Type': d.ct, 'x-upsert': 'true' },
+        body: d.buf
       }).then(function (r) {
         if (!r.ok) return r.text().then(function (t) { throw new Error('Storage: ' + t); });
         return api(SB_URL + '/rest/v1/project_files', {
@@ -307,7 +318,7 @@
   // hidden file input reused for "+ Add file"
   var addInput = document.createElement('input');
   addInput.type = 'file';
-  addInput.accept = 'application/pdf,.pdf';
+  addInput.accept = 'application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png';
   addInput.style.display = 'none';
   document.body.appendChild(addInput);
   var addTargetProj = null, addMsgEl = null;
