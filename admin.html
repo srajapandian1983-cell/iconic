@@ -50,6 +50,16 @@
   .enq .p-desc a { color: #1a3c5e; }
   .enq-msg { margin-top: 8px; font-size: 13px; white-space: pre-wrap;
     background: #f4f7fb; border-radius: 5px; padding: 9px 11px; }
+
+  .tm { display: flex; align-items: center; gap: 12px;
+    border-top: 1px solid #f0f0f0; padding: 10px 0; }
+  .tm:first-of-type { border-top: 0; }
+  .tm img, .tm .ph { width: 46px; height: 56px; border-radius: 6px; object-fit: cover;
+    background: #e3e9f1; flex: none; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; color: #1a3c5e; }
+  .tm .tm-name { font-weight: bold; color: #1a3c5e; font-size: 14px; }
+  .tm .tm-pos { font-size: 13px; color: #666; }
+  .tm .grow { flex: 1; }
 </style>
 </head>
 <body>
@@ -98,6 +108,21 @@
     <div class="card">
       <h2>Contact requests</h2>
       <div id="enqList" class="muted">Loading&hellip;</div>
+    </div>
+
+    <div class="card">
+      <h2>Team members</h2>
+      <form id="teamForm">
+        <label for="tm-name">Name *</label>
+        <input type="text" id="tm-name" placeholder="e.g. S. Rajapandian" required />
+        <label for="tm-position">Position *</label>
+        <input type="text" id="tm-position" placeholder="e.g. Managing Director" required />
+        <label for="tm-photo">Passport-size photo (JPG or PNG) *</label>
+        <input type="file" id="tm-photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png" required />
+        <button id="teamBtn" type="submit">Add team member</button>
+        <div id="teamMsg" class="msg"></div>
+      </form>
+      <div id="teamList" class="muted" style="margin-top:16px;">Loading&hellip;</div>
     </div>
   </section>
 
@@ -184,6 +209,7 @@
     var s = getSession(); $('who').textContent = (s && s.email) || '';
     loadList();
     loadEnquiries();
+    loadTeam();
   }
 
   loginForm.addEventListener('submit', function (e) {
@@ -430,6 +456,84 @@
     b.disabled = true;
     api(SB_URL + '/rest/v1/enquiries?id=eq.' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })
       .then(loadEnquiries)
+      .catch(function () { b.disabled = false; alert('Delete failed.'); });
+  });
+
+  // ---- team members ----
+  function loadTeam() {
+    var el = $('teamList');
+    el.className = 'muted'; el.textContent = 'Loading…';
+    api(SB_URL + '/rest/v1/team_members?select=id,name,position,photo_path,sort_order&order=sort_order.asc,created_at.asc')
+      .then(function (r) { return r.ok ? r.json() : r.text().then(function (t) { throw new Error(t); }); })
+      .then(function (rows) {
+        if (!rows.length) { el.className = 'muted'; el.textContent = 'No team members yet.'; return; }
+        el.className = '';
+        el.innerHTML = rows.map(function (m) {
+          var pic = m.photo_path
+            ? '<img src="' + pubUrl(m.photo_path) + '" alt="" />'
+            : '<div class="ph">' + esc((m.name || '?').charAt(0).toUpperCase()) + '</div>';
+          return '<div class="tm">' + pic +
+            '<div class="grow"><div class="tm-name">' + esc(m.name) + '</div>' +
+            '<div class="tm-pos">' + esc(m.position) + '</div></div>' +
+            '<button class="link del-tm" data-id="' + esc(m.id) + '" data-path="' + esc(m.photo_path || '') + '">Delete</button>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function (err) {
+        el.className = 'msg err';
+        el.textContent = 'Could not load team. ' +
+          (/team_members/.test(String(err)) ? 'Run the team_members SQL in Supabase first.' : String(err).slice(0, 180));
+      });
+  }
+
+  $('teamForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var file = $('tm-photo').files[0];
+    if (!file) return;
+    var btn = $('teamBtn'), msg = $('teamMsg');
+    btn.disabled = true;
+    msg.className = 'msg muted'; msg.textContent = 'Uploading…';
+    readFile(file).then(function (d) {
+      if (d.ext === 'pdf') throw new Error('Please choose a JPG or PNG photo.');
+      var id = uuid();
+      var path = 'team/' + id + '.' + d.ext;
+      return api(objUrl(path), {
+        method: 'POST',
+        headers: { 'Content-Type': d.ct, 'x-upsert': 'true' },
+        body: d.buf
+      }).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error('Storage: ' + t); });
+        return api(SB_URL + '/rest/v1/team_members', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+          body: JSON.stringify({
+            id: id, name: $('tm-name').value.trim(),
+            position: $('tm-position').value.trim(), photo_path: path
+          })
+        }).then(function (r2) {
+          if (!r2.ok) {
+            api(objUrl(path), { method: 'DELETE' });
+            return r2.text().then(function (t) { throw new Error('Database: ' + t); });
+          }
+        });
+      });
+    }).then(function () {
+      msg.className = 'msg ok'; msg.textContent = 'Team member added.';
+      $('teamForm').reset(); loadTeam();
+    }).catch(function (err) {
+      msg.className = 'msg err'; msg.textContent = String(err && err.message ? err.message : err);
+    }).finally(function () { btn.disabled = false; });
+  });
+
+  $('teamList').addEventListener('click', function (e) {
+    var b = e.target.closest('.del-tm'); if (!b) return;
+    if (!confirm('Delete this team member?')) return;
+    b.disabled = true;
+    api(SB_URL + '/rest/v1/team_members?id=eq.' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })
+      .then(function () {
+        if (b.dataset.path) return api(objUrl(b.dataset.path), { method: 'DELETE' });
+      })
+      .then(loadTeam)
       .catch(function () { b.disabled = false; alert('Delete failed.'); });
   });
 

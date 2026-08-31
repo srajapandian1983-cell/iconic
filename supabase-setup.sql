@@ -88,6 +88,32 @@ drop policy if exists "enquiries auth delete" on public.enquiries;
 create policy "enquiries auth delete" on public.enquiries
   for delete to authenticated using (true);
 
+-- 2c. Team members shown on the website "Our Team" section ---------------
+create table if not exists public.team_members (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  position   text not null,
+  photo_path text,
+  sort_order int  not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table public.team_members enable row level security;
+
+drop policy if exists "team public read" on public.team_members;
+create policy "team public read" on public.team_members
+  for select using (true);
+
+drop policy if exists "team auth insert" on public.team_members;
+create policy "team auth insert" on public.team_members
+  for insert to authenticated with check (true);
+
+drop policy if exists "team auth delete" on public.team_members;
+create policy "team auth delete" on public.team_members
+  for delete to authenticated using (true);
+
+-- Team photos are stored in the same 'project-pdfs' bucket, under team/.
+
 -- 3. Storage bucket for the files ---------------------------------------
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('project-pdfs', 'project-pdfs', true, 52428800)   -- 50 MB

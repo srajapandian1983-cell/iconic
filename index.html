@@ -217,6 +217,56 @@
       text-align: center;
     }
 
+    /* Team */
+    .team {
+      background: var(--surface);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 220px));
+      gap: 30px;
+      justify-content: center;
+    }
+
+    .team-member {
+      text-align: center;
+    }
+
+    .team-member .photo {
+      width: 152px;
+      height: 186px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: var(--band);
+      border: 4px solid var(--band);
+      box-shadow: var(--shadow);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .team-member .photo-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: bold;
+      color: var(--navy);
+    }
+
+    .team-member .name {
+      margin-top: 14px;
+      font-weight: bold;
+      color: var(--navy);
+      font-size: 16px;
+    }
+
+    .team-member .position {
+      color: var(--gold-dark);
+      font-size: 13px;
+      font-weight: bold;
+    }
+
     /* Services */
     .services {
       background: var(--band);
@@ -639,6 +689,7 @@
       <div class="logo">SAM ICONIC <span>Development</span> Pvt Ltd</div>
       <nav>
         <a href="#about">About</a>
+        <a href="#team">Team</a>
         <a href="#services">Services</a>
         <a href="#properties">Properties</a>
         <a href="#ongoing">Ongoing Projects</a>
@@ -908,6 +959,13 @@
       <h2>About Us</h2>
       <p>SAM ICONIC Development Private Limited is a real estate firm based in West Tambaram, Chennai. We help buyers, sellers, tenants and landlords with property purchase, sale, rental and consulting.</p>
       <p>Our work covers residential plots, flats, individual houses, villas, commercial shops, office space and agricultural land. We assist clients through site visits, price guidance, documentation support and registration.</p>
+    </div>
+  </section>
+
+  <section class="team" id="team" hidden>
+    <div class="container">
+      <h2>Our Team</h2>
+      <div class="team-grid" id="team-grid"></div>
     </div>
   </section>
 
@@ -1219,6 +1277,46 @@
           msg.textContent = 'Network problem - please call us on 6385106308.';
         }).finally(function () { btn.disabled = false; });
       });
+    })();
+
+    // Our Team: load members from Supabase; show the section only if there are any.
+    (function () {
+      var SB_URL = 'https://mmmyliccvuawhyhcxusw.supabase.co';
+      var SB_KEY = 'sb_publishable_DCLPWFVScI8EadAJQCoT-A_bj5FTTP7';
+      var BUCKET = 'project-pdfs';
+      var sec = document.getElementById('team');
+      var grid = document.getElementById('team-grid');
+      if (!sec || !grid) return;
+
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+      }
+      function pub(path) {
+        return SB_URL + '/storage/v1/object/public/' + BUCKET + '/' +
+          String(path).split('/').map(encodeURIComponent).join('/');
+      }
+
+      fetch(SB_URL + '/rest/v1/team_members?select=name,position,photo_path,sort_order,created_at&order=sort_order.asc,created_at.asc', {
+        headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+      })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function (rows) {
+          if (!rows || !rows.length) return;
+          grid.innerHTML = rows.map(function (m) {
+            var initial = (m.name || '?').trim().charAt(0).toUpperCase();
+            var photo = m.photo_path
+              ? '<img class="photo" src="' + pub(m.photo_path) + '" alt="' + esc(m.name) + '" />'
+              : '<div class="photo photo-fallback">' + esc(initial) + '</div>';
+            return '<div class="team-member">' + photo +
+              '<div class="name">' + esc(m.name) + '</div>' +
+              '<div class="position">' + esc(m.position) + '</div>' +
+            '</div>';
+          }).join('');
+          sec.hidden = false;
+        })
+        .catch(function () { /* leave the section hidden */ });
     })();
   </script>
 
