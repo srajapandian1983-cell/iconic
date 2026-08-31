@@ -60,6 +60,13 @@
   .tm .tm-name { font-weight: bold; color: #1a3c5e; font-size: 14px; }
   .tm .tm-pos { font-size: 13px; color: #666; }
   .tm .grow { flex: 1; }
+
+  .act { display: flex; align-items: flex-start; gap: 12px;
+    border-top: 1px solid #f0f0f0; padding: 10px 0; }
+  .act:first-of-type { border-top: 0; }
+  .act img { width: 84px; height: 60px; border-radius: 6px; object-fit: cover;
+    background: #e3e9f1; flex: none; }
+  .act .grow { flex: 1; font-size: 13px; color: #444; white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -108,6 +115,19 @@
     <div class="card">
       <h2>Contact requests</h2>
       <div id="enqList" class="muted">Loading&hellip;</div>
+    </div>
+
+    <div class="card">
+      <h2>Our Activities</h2>
+      <form id="actForm">
+        <label for="ac-desc">Description *</label>
+        <textarea id="ac-desc" placeholder="e.g. Site inauguration at Kattrambakkam, Aug 2026" required></textarea>
+        <label for="ac-photo">Photo (JPG or PNG, up to 50 MB) *</label>
+        <input type="file" id="ac-photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png" required />
+        <button id="actBtn" type="submit">Add activity</button>
+        <div id="actMsg" class="msg"></div>
+      </form>
+      <div id="actList" class="muted" style="margin-top:16px;">Loading&hellip;</div>
     </div>
 
     <div class="card">
@@ -209,6 +229,7 @@
     var s = getSession(); $('who').textContent = (s && s.email) || '';
     loadList();
     loadEnquiries();
+    loadActivities();
     loadTeam();
   }
 
@@ -456,6 +477,81 @@
     b.disabled = true;
     api(SB_URL + '/rest/v1/enquiries?id=eq.' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })
       .then(loadEnquiries)
+      .catch(function () { b.disabled = false; alert('Delete failed.'); });
+  });
+
+  // ---- activities (photo + description) ----
+  function loadActivities() {
+    var el = $('actList');
+    el.className = 'muted'; el.textContent = 'Loading…';
+    api(SB_URL + '/rest/v1/activities?select=id,description,photo_path,sort_order&order=sort_order.asc,created_at.desc')
+      .then(function (r) { return r.ok ? r.json() : r.text().then(function (t) { throw new Error(t); }); })
+      .then(function (rows) {
+        if (!rows.length) { el.className = 'muted'; el.textContent = 'No activities yet.'; return; }
+        el.className = '';
+        el.innerHTML = rows.map(function (a) {
+          return '<div class="act">' +
+            '<img src="' + pubUrl(a.photo_path) + '" alt="" />' +
+            '<div class="grow">' + esc(a.description) + '</div>' +
+            '<button class="link del-act" data-id="' + esc(a.id) + '" data-path="' + esc(a.photo_path) + '">Delete</button>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function (err) {
+        el.className = 'msg err';
+        el.textContent = 'Could not load activities. ' +
+          (/activities/.test(String(err)) ? 'Run the activities SQL in Supabase first.' : String(err).slice(0, 180));
+      });
+  }
+
+  $('actForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var file = $('ac-photo').files[0];
+    if (!file) return;
+    var btn = $('actBtn'), msg = $('actMsg');
+    if (file.size > MAX_MB * 1048576) {
+      msg.className = 'msg err';
+      msg.textContent = 'This photo is ' + (file.size / 1048576).toFixed(0) + ' MB. The limit is ' + MAX_MB + ' MB.';
+      return;
+    }
+    btn.disabled = true;
+    msg.className = 'msg muted'; msg.textContent = 'Uploading…';
+    readFile(file).then(function (d) {
+      if (d.ext === 'pdf') throw new Error('Please choose a JPG or PNG photo.');
+      var id = uuid();
+      var path = 'activities/' + id + '.' + d.ext;
+      return api(objUrl(path), {
+        method: 'POST',
+        headers: { 'Content-Type': d.ct, 'x-upsert': 'true' },
+        body: d.buf
+      }).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error('Storage: ' + t); });
+        return api(SB_URL + '/rest/v1/activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+          body: JSON.stringify({ id: id, description: $('ac-desc').value.trim(), photo_path: path })
+        }).then(function (r2) {
+          if (!r2.ok) {
+            api(objUrl(path), { method: 'DELETE' });
+            return r2.text().then(function (t) { throw new Error('Database: ' + t); });
+          }
+        });
+      });
+    }).then(function () {
+      msg.className = 'msg ok'; msg.textContent = 'Activity added.';
+      $('actForm').reset(); loadActivities();
+    }).catch(function (err) {
+      msg.className = 'msg err'; msg.textContent = String(err && err.message ? err.message : err);
+    }).finally(function () { btn.disabled = false; });
+  });
+
+  $('actList').addEventListener('click', function (e) {
+    var b = e.target.closest('.del-act'); if (!b) return;
+    if (!confirm('Delete this activity?')) return;
+    b.disabled = true;
+    api(SB_URL + '/rest/v1/activities?id=eq.' + encodeURIComponent(b.dataset.id), { method: 'DELETE' })
+      .then(function () { if (b.dataset.path) return api(objUrl(b.dataset.path), { method: 'DELETE' }); })
+      .then(loadActivities)
       .catch(function () { b.disabled = false; alert('Delete failed.'); });
   });
 

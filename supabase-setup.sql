@@ -88,6 +88,31 @@ drop policy if exists "enquiries auth delete" on public.enquiries;
 create policy "enquiries auth delete" on public.enquiries
   for delete to authenticated using (true);
 
+-- 2d. Activities shown on the website "Our Activities" section -----------
+create table if not exists public.activities (
+  id         uuid primary key default gen_random_uuid(),
+  description text not null,
+  photo_path text not null,
+  sort_order int  not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table public.activities enable row level security;
+
+drop policy if exists "activities public read" on public.activities;
+create policy "activities public read" on public.activities
+  for select using (true);
+
+drop policy if exists "activities auth insert" on public.activities;
+create policy "activities auth insert" on public.activities
+  for insert to authenticated with check (true);
+
+drop policy if exists "activities auth delete" on public.activities;
+create policy "activities auth delete" on public.activities
+  for delete to authenticated using (true);
+
+-- Activity photos live in the 'project-pdfs' bucket, under activities/.
+
 -- 2c. Team members shown on the website "Our Team" section ---------------
 create table if not exists public.team_members (
   id         uuid primary key default gen_random_uuid(),
