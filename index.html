@@ -217,47 +217,93 @@
       text-align: center;
     }
 
-    /* Activities */
+    /* Activities slideshow */
     .activities {
       background: var(--band);
     }
 
-    .act-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 340px));
-      gap: 26px;
-      justify-content: center;
-    }
-
-    .act-card {
+    .act-slider {
+      position: relative;
+      max-width: 780px;
+      margin: 0 auto;
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       box-shadow: var(--shadow);
-      transition: transform .18s ease, box-shadow .18s ease;
     }
 
-    .act-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-hover);
+    .act-viewport {
+      overflow: hidden;
     }
 
-    .act-card img {
+    .act-track {
+      display: flex;
+      transition: transform .45s ease;
+    }
+
+    .act-slide {
+      flex: 0 0 100%;
+      min-width: 0;
+    }
+
+    .act-slide img {
       width: 100%;
-      height: 210px;
+      height: 380px;
       object-fit: cover;
       display: block;
       cursor: pointer;
       background: var(--band);
     }
 
-    .act-card .caption {
-      padding: 16px 18px;
+    .act-slide .caption {
+      padding: 16px 20px 18px;
       font-size: 14px;
       color: var(--ink);
       white-space: pre-wrap;
     }
+
+    .act-nav {
+      position: absolute;
+      top: 190px;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(16, 45, 74, 0.55);
+      color: #fff;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 3;
+    }
+
+    .act-nav:hover { background: rgba(16, 45, 74, 0.85); }
+    .act-nav.prev { left: 12px; }
+    .act-nav.next { right: 12px; }
+
+    .act-dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      padding: 2px 0 16px;
+    }
+
+    .act-dots button {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 0;
+      padding: 0;
+      background: var(--line);
+      cursor: pointer;
+    }
+
+    .act-dots button.is-active { background: var(--gold); }
+
+    .act-single .act-nav,
+    .act-single .act-dots { display: none; }
 
     /* Team */
     .team {
@@ -1000,7 +1046,14 @@
   <section class="activities" id="activities" hidden>
     <div class="container">
       <h2>Our Activities</h2>
-      <div class="act-grid" id="act-grid"></div>
+      <div class="act-slider" id="act-slider">
+        <div class="act-viewport">
+          <div class="act-track" id="act-track"></div>
+        </div>
+        <button class="act-nav prev" id="act-prev" type="button" aria-label="Previous">&#8249;</button>
+        <button class="act-nav next" id="act-next" type="button" aria-label="Next">&#8250;</button>
+        <div class="act-dots" id="act-dots"></div>
+      </div>
     </div>
   </section>
 
@@ -1369,15 +1422,17 @@
         .catch(function () { /* leave the section hidden */ });
     })();
 
-    // Our Activities: photo + description cards from Supabase; each photo opens
-    // in the full-size viewer. Section shows only when there is at least one.
+    // Our Activities: auto-advancing photo slideshow from Supabase. Each photo
+    // opens in the full-size viewer. Section shows only when there is >= 1.
     (function () {
       var SB_URL = 'https://mmmyliccvuawhyhcxusw.supabase.co';
       var SB_KEY = 'sb_publishable_DCLPWFVScI8EadAJQCoT-A_bj5FTTP7';
       var BUCKET = 'project-pdfs';
       var sec = document.getElementById('activities');
-      var grid = document.getElementById('act-grid');
-      if (!sec || !grid) return;
+      var slider = document.getElementById('act-slider');
+      var track = document.getElementById('act-track');
+      var dots = document.getElementById('act-dots');
+      if (!sec || !track) return;
 
       function esc(s) {
         return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -1395,15 +1450,54 @@
         .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
         .then(function (rows) {
           if (!rows || !rows.length) return;
-          grid.innerHTML = rows.map(function (a) {
+          var n = rows.length;
+
+          track.innerHTML = rows.map(function (a) {
             var url = pub(a.photo_path);
-            return '<div class="act-card">' +
+            return '<div class="act-slide">' +
               '<img src="' + url + '" alt="" loading="lazy" data-file="' + url +
               '" data-kind="image" data-title="' + esc(a.description || 'Activity') + '" />' +
               '<div class="caption">' + esc(a.description) + '</div>' +
             '</div>';
           }).join('');
+          dots.innerHTML = rows.map(function (_, i) {
+            return '<button type="button" data-i="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>';
+          }).join('');
+
           sec.hidden = false;
+          if (n < 2) { slider.classList.add('act-single'); return; }
+
+          var dotEls = dots.querySelectorAll('button');
+          var cur = 0, timer;
+          function go(i) {
+            cur = (i % n + n) % n;
+            track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+            for (var k = 0; k < dotEls.length; k++) dotEls[k].classList.toggle('is-active', k === cur);
+          }
+          function start() { stop(); timer = setInterval(function () { go(cur + 1); }, 5000); }
+          function stop() { clearInterval(timer); }
+
+          document.getElementById('act-prev').addEventListener('click', function () { go(cur - 1); start(); });
+          document.getElementById('act-next').addEventListener('click', function () { go(cur + 1); start(); });
+          dots.addEventListener('click', function (e) {
+            var b = e.target.closest('button'); if (!b) return;
+            go(+b.getAttribute('data-i')); start();
+          });
+          slider.addEventListener('mouseenter', stop);
+          slider.addEventListener('mouseleave', start);
+
+          // basic touch swipe
+          var x0 = null;
+          track.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; stop(); }, { passive: true });
+          track.addEventListener('touchend', function (e) {
+            if (x0 === null) return;
+            var dx = e.changedTouches[0].clientX - x0;
+            if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1));
+            x0 = null; start();
+          });
+
+          go(0);
+          start();
         })
         .catch(function () { /* leave the section hidden */ });
     })();
