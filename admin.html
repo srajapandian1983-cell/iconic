@@ -5,68 +5,103 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin | SAM ICONIC Development</title>
 <style>
+  :root {
+    --navy: #103a5c; --navy-deep: #0c2c47; --navy-light: #1d5a82;
+    --gold: #e3a52e; --gold-dark: #c68a1f;
+    --ink: #2b3a44; --muted: #5c6b76;
+    --bg: #eef1f6; --surface: #fff; --line: #d9e1ea;
+    --shadow: 0 8px 24px rgba(16, 45, 74, 0.10);
+    --danger: #c0392b; --ok: #2f7d32;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; background: #eef2f7; color: #333; }
-  header { background: #1a3c5e; color: #fff; padding: 16px 20px; font-weight: bold; letter-spacing: 1px; }
-  header span { color: #f0a500; }
-  .wrap { max-width: 760px; margin: 24px auto; padding: 0 16px; }
-  .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 22px; margin-bottom: 20px; }
-  h2 { color: #1a3c5e; font-size: 18px; margin-bottom: 16px; }
-  label { display: block; font-size: 14px; font-weight: bold; color: #1a3c5e; margin: 12px 0 6px; }
-  input, textarea {
-    width: 100%; padding: 10px; border: 1px solid #ccd6e0; border-radius: 5px; font-size: 14px; font-family: inherit;
-  }
-  textarea { min-height: 80px; resize: vertical; }
-  button {
-    background: #f0a500; color: #1a3c5e; border: 0; padding: 11px 22px; border-radius: 5px;
-    font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 16px;
-  }
-  button:hover { background: #d99400; }
-  button:disabled { opacity: .6; cursor: default; }
-  button.ghost { background: none; border: 1px solid #1a3c5e; color: #1a3c5e; margin: 0; padding: 6px 14px; }
-  button.small { margin: 0; padding: 6px 12px; font-size: 13px; }
-  button.link { background: none; color: #c0392b; border: 1px solid #c0392b; margin: 0; padding: 4px 10px; font-size: 12px; }
-  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .msg { margin-top: 14px; font-size: 14px; word-break: break-word; }
-  .ok { color: #2f7d32; }
-  .err { color: #c0392b; }
-  .muted { color: #888; font-size: 14px; }
+  body { font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
 
-  .proj { border: 1px solid #e6e6e6; border-radius: 7px; padding: 16px; margin-top: 14px; }
+  header {
+    background: linear-gradient(135deg, var(--navy-deep), var(--navy-light));
+    color: #fff; padding: 18px 24px; font-weight: bold; letter-spacing: 1px;
+    box-shadow: 0 2px 14px rgba(12, 44, 71, 0.28);
+  }
+  header span { color: var(--gold); }
+  .wrap { max-width: 1000px; margin: 26px auto; padding: 0 18px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 26px; margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+
+  /* section = heading on the left, controls on the right */
+  .sect { display: grid; grid-template-columns: 240px 1fr; gap: 34px; align-items: start; }
+  .sect-head h2 { color: var(--navy); font-size: 17px; margin-bottom: 6px; }
+  .sect-head .hint { font-size: 13px; color: var(--muted); }
+  @media (max-width: 760px) {
+    .sect { grid-template-columns: 1fr; gap: 14px; }
+    .sect-head { border-left: 3px solid var(--gold); padding-left: 12px; }
+  }
+
+  h2 { color: var(--navy); font-size: 17px; }
+
+  label { display: block; font-size: 13px; font-weight: bold; color: var(--navy); margin: 14px 0 6px; }
+  .sect-body form > label:first-of-type, #loginForm > label:first-of-type { margin-top: 0; }
+  input, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px;
+    font-size: 14px; font-family: inherit; color: var(--ink); background: #fff;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--navy-light); }
+  textarea { min-height: 82px; resize: vertical; }
+
+  button {
+    background: var(--gold); color: var(--navy-deep); border: 0; padding: 11px 24px; border-radius: 6px;
+    font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 18px;
+    box-shadow: 0 5px 14px rgba(227, 165, 46, 0.35); transition: background .15s ease, transform .15s ease;
+  }
+  button:hover { background: var(--gold-dark); transform: translateY(-1px); }
+  button:disabled { opacity: .6; cursor: default; transform: none; }
+  button.ghost { background: none; border: 1px solid var(--navy); color: var(--navy); margin: 0; padding: 7px 16px; box-shadow: none; }
+  button.ghost:hover { background: var(--navy); color: #fff; }
+  button.small { margin: 0; padding: 6px 12px; font-size: 13px; box-shadow: none; }
+  button.link { background: none; color: var(--danger); border: 1px solid var(--danger); margin: 0; padding: 4px 10px; font-size: 12px; box-shadow: none; }
+  button.link:hover { background: var(--danger); color: #fff; }
+
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .msg { margin-top: 14px; font-size: 14px; word-break: break-word; }
+  .ok { color: var(--ok); }
+  .err { color: var(--danger); }
+  .muted { color: var(--muted); font-size: 14px; }
+
+  .proj { border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-top: 14px; }
   .proj:first-of-type { margin-top: 0; }
   .proj .p-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-  .proj .p-title { font-weight: bold; color: #1a3c5e; font-size: 15px; }
-  .proj .p-desc { font-size: 13px; color: #666; margin-top: 3px; }
+  .proj .p-title { font-weight: bold; color: var(--navy); font-size: 15px; }
+  .proj .p-desc { font-size: 13px; color: var(--muted); margin-top: 3px; }
   .files { list-style: none; margin: 12px 0 0; }
   .files li { display: flex; justify-content: space-between; align-items: center; gap: 10px;
-    border-top: 1px solid #f0f0f0; padding: 8px 0; font-size: 13px; }
-  .files li a { color: #1a3c5e; font-weight: bold; overflow-wrap: anywhere; }
-  .files .none { color: #999; border-top: 1px solid #f0f0f0; padding-top: 8px; }
+    border-top: 1px solid #eef2f6; padding: 8px 0; font-size: 13px; }
+  .files li a { color: var(--navy); font-weight: bold; overflow-wrap: anywhere; }
+  .files .none { color: #999; border-top: 1px solid #eef2f6; padding-top: 8px; }
   .p-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .p-msg { font-size: 13px; margin-left: 4px; }
 
-  .enq { border: 1px solid #e6e6e6; border-radius: 7px; padding: 14px; margin-top: 12px; }
+  .enq { border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-top: 12px; }
   .enq:first-of-type { margin-top: 0; }
-  .enq .p-desc a { color: #1a3c5e; }
+  .enq .p-desc a { color: var(--navy); }
   .enq-msg { margin-top: 8px; font-size: 13px; white-space: pre-wrap;
-    background: #f4f7fb; border-radius: 5px; padding: 9px 11px; }
+    background: #f4f7fb; border-radius: 6px; padding: 9px 11px; }
 
-  .tm { display: flex; align-items: center; gap: 12px;
-    border-top: 1px solid #f0f0f0; padding: 10px 0; }
+  .tm { display: flex; align-items: center; gap: 12px; border-top: 1px solid #eef2f6; padding: 10px 0; }
   .tm:first-of-type { border-top: 0; }
   .tm img, .tm .ph { width: 46px; height: 56px; border-radius: 6px; object-fit: cover;
     background: #e3e9f1; flex: none; display: flex; align-items: center; justify-content: center;
-    font-weight: bold; color: #1a3c5e; }
-  .tm .tm-name { font-weight: bold; color: #1a3c5e; font-size: 14px; }
-  .tm .tm-pos { font-size: 13px; color: #666; }
+    font-weight: bold; color: var(--navy); }
+  .tm .tm-name { font-weight: bold; color: var(--navy); font-size: 14px; }
+  .tm .tm-pos { font-size: 13px; color: var(--muted); }
   .tm .grow { flex: 1; }
 
-  .act { display: flex; align-items: flex-start; gap: 12px;
-    border-top: 1px solid #f0f0f0; padding: 10px 0; }
+  .act { display: flex; align-items: flex-start; gap: 12px; border-top: 1px solid #eef2f6; padding: 10px 0; }
   .act:first-of-type { border-top: 0; }
-  .act img { width: 84px; height: 60px; border-radius: 6px; object-fit: cover;
-    background: #e3e9f1; flex: none; }
+  .act img { width: 84px; height: 60px; border-radius: 6px; object-fit: cover; background: #e3e9f1; flex: none; }
   .act .grow { flex: 1; font-size: 13px; color: #444; white-space: pre-wrap; }
+
+  #loginView { max-width: 420px; margin: 60px auto 0; }
 </style>
 </head>
 <body>
@@ -86,6 +121,7 @@
   </section>
 
   <section id="adminView" hidden>
+
     <div class="card">
       <div class="row">
         <span class="muted">Signed in as <b id="who"></b></span>
@@ -93,57 +129,83 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2>Add a new project</h2>
-      <form id="createForm">
-        <label for="title">Title *</label>
-        <input type="text" id="title" placeholder="e.g. Iconic Green Meadows" required />
-        <label for="description">Description *</label>
-        <textarea id="description" placeholder="e.g. DTCP approved plots at West Tambaram, development in progress" required></textarea>
-        <label for="firstFile">First file &mdash; PDF, JPG or PNG *</label>
-        <input type="file" id="firstFile" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" required />
-        <button id="createBtn" type="submit">Create project</button>
-        <div id="createMsg" class="msg"></div>
-      </form>
+    <div class="card sect">
+      <div class="sect-head">
+        <h2>Add a new project</h2>
+        <p class="hint">Title, description and the first file. You can add more files afterwards.</p>
+      </div>
+      <div class="sect-body">
+        <form id="createForm">
+          <label for="title">Title *</label>
+          <input type="text" id="title" placeholder="e.g. Iconic Green Meadows" required />
+          <label for="description">Description *</label>
+          <textarea id="description" placeholder="e.g. DTCP approved plots at West Tambaram, development in progress" required></textarea>
+          <label for="firstFile">First file &mdash; PDF, JPG or PNG *</label>
+          <input type="file" id="firstFile" accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png" required />
+          <button id="createBtn" type="submit">Create project</button>
+          <div id="createMsg" class="msg"></div>
+        </form>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Projects</h2>
-      <div id="list" class="muted">Loading&hellip;</div>
+    <div class="card sect">
+      <div class="sect-head">
+        <h2>Projects</h2>
+        <p class="hint">Every project and its files. Add a file or delete from here.</p>
+      </div>
+      <div class="sect-body">
+        <div id="list" class="muted">Loading&hellip;</div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Contact requests</h2>
-      <div id="enqList" class="muted">Loading&hellip;</div>
+    <div class="card sect">
+      <div class="sect-head">
+        <h2>Contact requests</h2>
+        <p class="hint">Enquiries people sent through the website form.</p>
+      </div>
+      <div class="sect-body">
+        <div id="enqList" class="muted">Loading&hellip;</div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Our Activities</h2>
-      <form id="actForm">
-        <label for="ac-desc">Description *</label>
-        <textarea id="ac-desc" placeholder="e.g. Site inauguration at Kattrambakkam, Aug 2026" required></textarea>
-        <label for="ac-photo">Photo (JPG or PNG, up to 50 MB) *</label>
-        <input type="file" id="ac-photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png" required />
-        <button id="actBtn" type="submit">Add activity</button>
-        <div id="actMsg" class="msg"></div>
-      </form>
-      <div id="actList" class="muted" style="margin-top:16px;">Loading&hellip;</div>
+    <div class="card sect">
+      <div class="sect-head">
+        <h2>Our Activities</h2>
+        <p class="hint">Photo + description. Shown as a slideshow on the site.</p>
+      </div>
+      <div class="sect-body">
+        <form id="actForm">
+          <label for="ac-desc">Description *</label>
+          <textarea id="ac-desc" placeholder="e.g. Site inauguration at Kattrambakkam, Aug 2026" required></textarea>
+          <label for="ac-photo">Photo (JPG or PNG, up to 50 MB) *</label>
+          <input type="file" id="ac-photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png" required />
+          <button id="actBtn" type="submit">Add activity</button>
+          <div id="actMsg" class="msg"></div>
+        </form>
+        <div id="actList" class="muted" style="margin-top:16px;">Loading&hellip;</div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Team members</h2>
-      <form id="teamForm">
-        <label for="tm-name">Name *</label>
-        <input type="text" id="tm-name" placeholder="e.g. S. Rajapandian" required />
-        <label for="tm-position">Position *</label>
-        <input type="text" id="tm-position" placeholder="e.g. Managing Director" required />
-        <label for="tm-photo">Passport-size photo (JPG or PNG) *</label>
-        <input type="file" id="tm-photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png" required />
-        <button id="teamBtn" type="submit">Add team member</button>
-        <div id="teamMsg" class="msg"></div>
-      </form>
-      <div id="teamList" class="muted" style="margin-top:16px;">Loading&hellip;</div>
+    <div class="card sect">
+      <div class="sect-head">
+        <h2>Team members</h2>
+        <p class="hint">Name, position and a passport-size photo.</p>
+      </div>
+      <div class="sect-body">
+        <form id="teamForm">
+          <label for="tm-name">Name *</label>
+          <input type="text" id="tm-name" placeholder="e.g. S. Rajapandian" required />
+          <label for="tm-position">Position *</label>
+          <input type="text" id="tm-position" placeholder="e.g. Managing Director" required />
+          <label for="tm-photo">Passport-size photo (JPG or PNG) *</label>
+          <input type="file" id="tm-photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png" required />
+          <button id="teamBtn" type="submit">Add team member</button>
+          <div id="teamMsg" class="msg"></div>
+        </form>
+        <div id="teamList" class="muted" style="margin-top:16px;">Loading&hellip;</div>
+      </div>
     </div>
+
   </section>
 
 </div>
