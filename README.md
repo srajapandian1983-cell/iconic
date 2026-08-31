@@ -6,8 +6,8 @@ just HTML + Supabase.
 - 195/28, Gandhi Road, West Tambaram, Chennai 600045
 - Phone: 6385106308
 
-**Live site:** https://srajapandian1983-cell.github.io/iconic/
-**Admin (upload):** https://srajapandian1983-cell.github.io/iconic/admin.html
+**Live site:** https://iconicdevelopment.cloud/
+**Admin (upload):** https://iconicdevelopment.cloud/admin.html
 
 ## Files
 
