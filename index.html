@@ -83,6 +83,27 @@
       color: var(--gold);
     }
 
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 42px;
+      height: 38px;
+      padding: 7px;
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .nav-toggle span {
+      display: block;
+      height: 3px;
+      background: #fff;
+      border-radius: 2px;
+      transition: transform .2s ease, opacity .2s ease;
+    }
+
     /* Hero */
     .hero {
       position: relative;
@@ -768,6 +789,74 @@
     }
 
     .btn-wa svg { width: 20px; height: 20px; fill: #fff; }
+
+    /* ---------- Mobile ---------- */
+    @media (max-width: 760px) {
+      header { padding: 12px 0; }
+      header .container { flex-wrap: nowrap; }
+      .logo { font-size: 16px; letter-spacing: .5px; }
+
+      .nav-toggle { display: flex; }
+
+      nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        background: var(--navy-deep);
+        padding: 6px 0;
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32);
+        z-index: 20;
+      }
+
+      nav.open { display: flex; }
+
+      nav a {
+        margin: 0;
+        padding: 13px 22px;
+        font-size: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+      .nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+      .nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+      section { padding: 44px 0; }
+      section h2 { font-size: 22px; margin-bottom: 26px; }
+
+      .hero { padding: 60px 0 50px; min-height: 0; }
+      .hero-card { padding: 24px 20px; max-width: 100%; }
+      .hero h1 { font-size: 23px; }
+      .hero p { font-size: 15px; }
+
+      .about p { font-size: 15px; }
+      .card { padding: 20px; }
+
+      #ongoing-grid { grid-template-columns: 1fr; }
+
+      .act-slide img { height: 220px; }
+      .act-slide .caption { font-size: 13px; }
+      .act-nav { top: 110px; width: 38px; height: 38px; font-size: 22px; }
+
+      .contact-grid { gap: 24px; }
+      .contact-info { max-width: 100%; }
+      .contact-form { padding: 22px 18px; max-width: 100%; }
+
+      .team-grid { gap: 22px; }
+      .team-member .photo { width: 140px; height: 172px; }
+
+      .pdf-modal { padding: 8px; }
+      .pdf-modal-box { height: 92vh; }
+      .pdf-modal-bar { gap: 8px; padding: 8px 10px; }
+      .pdf-modal-bar a { font-size: 12px; }
+      .pdf-modal-body img { max-height: 100%; }
+
+      .wa-float { width: 52px; height: 52px; right: 14px; bottom: 14px; }
+      .wa-float svg { width: 28px; height: 28px; }
+    }
   </style>
 </head>
 <body>
@@ -775,7 +864,10 @@
   <header>
     <div class="container">
       <div class="logo">SAM ICONIC <span>Development</span> Pvt Ltd</div>
-      <nav>
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <nav id="nav">
         <a href="#activities">Activities</a>
         <a href="#about">About</a>
         <a href="#team">Team</a>
@@ -1237,6 +1329,22 @@
   </div>
 
   <script>
+    // Mobile menu toggle
+    (function () {
+      var t = document.getElementById('nav-toggle'), n = document.getElementById('nav');
+      if (!t || !n) return;
+      t.addEventListener('click', function () {
+        var open = n.classList.toggle('open');
+        t.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      n.addEventListener('click', function (e) {
+        if (e.target.tagName === 'A') {
+          n.classList.remove('open');
+          t.setAttribute('aria-expanded', 'false');
+        }
+      });
+    })();
+
     // Hero background slideshow: cross-fade between the building / layout templates
     (function () {
       var slides = document.querySelectorAll('.hero-slideshow .slide');
